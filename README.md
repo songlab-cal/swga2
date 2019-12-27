@@ -1,3 +1,41 @@
+# SOAPswga (**S**elective **O**timal **A**mplifying **P**rimers for **s**elective **w**hole-**g**enome **a**mplification)
+
+## Contents
+
+* [Introduction](#introduction)
+* [Installation](#installation)
+* [Workflow](#workflow)
+* [Parameters](#parameters)
+
+## Introduction 
+
+SOAPswga is a command-line tool for 
+
+## Installation
+
+We recommend that you install `soapswga` into a python [virtual environment](https://virtualenv.pypa.io/en/latest/).
+
+For example, you can create the virtual environment `soapswga_venv` using
+
+```bash
+$ virtualenv soapswga_venv
+```
+
+Enter the virtual environment using 
+
+```bash
+$ source soapswga_venv/bin/activate
+```
+
+Install dependencies in the virtual environment using
+
+```bash
+$ pip install -r requirements.txt
+```
+
+To install `soapswga` 
+
+
 # Selective whole genome amplification
 [![Build Status](https://travis-ci.org/eclarke/swga.svg?branch=master)](https://travis-ci.org/eclarke/swga)
 [![Coverage Status](https://coveralls.io/repos/eclarke/swga/badge.svg?branch=dev&service=github)](https://coveralls.io/github/eclarke/swga)
