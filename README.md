@@ -47,7 +47,21 @@ The general workflow has four main stages: 1) preprocessing of locations in the 
 
 The primary step in the program identifies the k-mers of length 6 to 12 in the target genome, which serve as possible candidate primers for downstream steps. The counts of these k-mers in the target and off-target genome(s) are computed using \verb!jellyfish! (\cite{marccais2011fast}), a fast, parallel k-mer counter for DNA. This entire preprocessing step is parallelized, and we have provided pre-computed files for \textit{Mycobacterium tuberculosis} as well as human. If parameters are changed, this step will not need to be re-run. 
 
-The k-mer files will be output into the directory
+The k-mer files for the target and off-target gnomes will be output to a file with a path prefix determined by command line parameters `-k` or `--kmer-fore` and `-j` or `--kmer-back`, respectively. 
+
+For example, if you have a ready json_file (see example/params.json) you can run 
+
+```bash
+$ step1 -j example.json
+```
+and for each prefix in `fg_prefixes` and `bg_prefixes`, a file with suffixes `_Xmer_all.txt` for X = 6 to 12 containing all k-mers of length X. The program will use the fasta file in `fg_genomes` or `bg_genomes` at the corresponding index. Thus, `fg_prefixes` should have the same length as `fg_genomes` and the same for `bg_prefixes` and `bg_genomes`. It they do not have the same length, the name of the fasta file will be used as the file prefix but at the path specified by `fg_prefixes` or `bg_prefixes` if it exists.
+
+Alternatively, if there is no pre-existing json file, the k-mer files for the target and off-target gnomes will be output to a file with a path prefix determined by command line parameters `-k` or `--kmer-fore` and `-j` or `--kmer-back`, respectively. 
+
+```bash
+$ step1 -k /Users/janeyu/Desktop/primer_data_dir/kmer_files/myco -l /Users/janeyu/Desktop/primer_data_dir/kmer_files/human
+```
+The genome files for the 
 
 ### Step 2: Candidate primer filtering 
 
