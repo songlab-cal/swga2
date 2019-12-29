@@ -61,34 +61,19 @@ Alternatively, if there is no pre-existing json file, the k-mer files for the ta
 ```bash
 $ step1 -k /Users/janeyu/Desktop/primer_data_dir/kmer_files/myco -l /Users/janeyu/Desktop/primer_data_dir/kmer_files/human
 ```
+
 The genome files for the 
 
 ### Step 2: Candidate primer filtering 
 
-In this step, we filter out candidate primers from the set of all motifs in the target genome based on having certain properties of each primer (as suggested by \cite{biosoft}). These are as follows:
+In this step, we filter out candidate primers from the set of all motifs in the target genome based on having certain properties of each primer (as suggested by `http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html`). Additionally, we filter by
 
-\begin{enumerate}
-    \item Melting temperature: the melting temperature must be within the standard temperature range of \verb!min_tm! (default $15^{\circ}$C) and \verb!max_tm! (default $45^{\circ}$C) as established in \cite{Leichty2014}. These temperatures are computed based on \cite{allawi1997}. 
-    
-    \item Self-dimer: candidate primers that could possibly form self-dimers are eliminated at this stage. This is estimated by the longest common subsequence between the candidate primer and its reverse complement being greater than \verb!default_max_self_dimer_bp! (default 4).
-    
-    \item Number of consecutive runs of a single base pair: primers with runs of 5 of five or longer are eliminated. 
-    
-    \item GC content: The GC content for each primer is maintained to be within \verb!min_GC! and \verb!max_GC! (default 0.375 and 0.625 respectively). Three or more G or C's are avoided in the last five and three base pairs of the 3'-end of the primer.
-    
-    \item Di-nucleotide repeats: di-nucleotide repeats of 5 or more are avoided.
-    
-    \item Binding frequency: binding frequency is computed as the number of exact matches of a primer in the genome, normalized by the total genome length. Primers that bind too sparsely to the target genome (lower than parameter \verb!min_fg_freq!) or too frequently to the off-target (higher than \verb!max_bg_freq!) are removed. 
-    
-    \item Binding evenness: the evenness of binding is calculated by finding the Gini index of the distances between each primer binding site on the target, and primers with Gini indices higher than \verb!max_gini! are removed. 
-    
-\end{enumerate}
-
-While the melting temperature filter is more a requirement of the experimental procedure, most of these filters are done in an effort to reduce mis-priming (binding to an undesirable location, e.g. the off-target genome or another primer). The computing of the frequencies of these candidate primers in the genomes is critical for estimating the number of possible binding positions in the target and off-target genomes, the former of which we would like to maximize and the latter of which we would like to minimize. Binding evenness as measured by the Gini index of the gap distances is important for downstream analysis such as short-read assembly and copy number estimation.
+- Binding frequency: binding frequency is computed as the number of exact matches of a primer in the genome, normalized by the total genome length. Primers that bind too sparsely to the target genome (lower than parameter `min_fg_freq`) or too frequently to the off-target (higher than \verb!max_bg_freq!) are removed. 
+- Binding evenness: the evenness of binding is calculated by finding the Gini index of the distances between each primer binding site on the target, and primers with Gini indices higher than `max_gini` are removed. 
 
 Finally, primers are ranked by the ratio of the binding frequency in the target genome(s) to the binding frequency in the off-target genome(s) and those primers with the highest ratio are identified for downstream use (by default, this currently identifies the top 500 primers, and is modifiable via the \verb!max_primers! parameter). 
 
-An h5py file is then created for storing primers and their respective locations for each genome (or chromosome). 
+An h5py file is then created for storing primers and their respective locations for each genome (or chromosome) in a similar way as tht ek-mer files but with suffix
 
 \subsubsection*{[Step 3] Amplification efficacy scoring: predicting individual potential strength to amplify} %DB - this section needs additional clarity JY - I'm not sure if I addressed your comments sufficiently. I really just intended to explain what this step does, just as the other steps do, and I was hoping to defer explanation of the random forest to the plasmid experiment section, which is how the random forest is trained. 
 In this step, before we optimize over the combinatorial space of primer sets, we score each individual candidate primer from the previous step. To do this we use a random forest regressor model trained from prior experimentation (discussed in \nameref{plasmidexp}). In short, this non-linear regression model is trained on plasmid experiments conducted using sets of a single primer and a single plasmid genome. The goal of this regressor is to predict amplification efficacy from various properties of the primer, including computed thermodynamically-principled features estimating a primer's binding affinity for the target genome (see \nameref{sec:tp_features}). %DB - not clear what this means. The features are not being generated. %DB - this is confusing. The random forest regressor has not been discussed and it is not clear yet where it comes from. It can be made clear here that optimal therodynamic features have been identified experimentally using random forest models. 
