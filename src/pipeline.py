@@ -6,15 +6,14 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 parser = OptionParser()
-parser.add_option('-p', '--project_name', default='project', help='')
 parser.add_option('-k', '--kmer_fore', help='')
 parser.add_option('-l', '--kmer_back', help='')
 parser.add_option('-f', '--fasta_fore', help='')
 parser.add_option('-g', '--fasta_back', help='')
-parser.add_option('-j', '--json_file', type=str, help='')
+parser.add_option(-j, '--json-file', type=str, help='')
 parser.add_option('-d', '--data_dir', default=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data/project'), type=str, help='')
 parser.add_option('-a', '--min_fg_freq', default=float(1/100000), type=float, help='')
-parser.add_option('-b', '--max_bg_freq', default=float(1/150000), type=float, help='')
+parser.add_option('-b', '--max_bg_freq', default=float(1/200000), type=float, help='')
 parser.add_option('--max_gini', default=0.6, type=float, help='')
 parser.add_option('--max_primer', default=500, type=int, help='')
 parser.add_option('--min_amp_pred', default=5, type=float, help='')
@@ -34,7 +33,6 @@ parser.add_option('-c', '--cpus', default=int(multiprocessing.cpu_count()), type
 print(options)
 params = parameter.write_args_to_json(options)
 print(params)
-# print(options)
 
 import kmer
 import rf_preprocessing
@@ -235,7 +233,7 @@ if __name__ == "__main__":
 
     # step1()
     step2()
-    step3()
+    # step3()
     # step4()
     # print(parameter.min_fg_freq)
 

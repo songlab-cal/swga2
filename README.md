@@ -63,8 +63,13 @@ The genome files will be read from the `fg_genomes` and `bg_genomes` entries in 
 Example:
 
 ```bash
-$ step1 -k ../example/kmer_files/myco -l ../example/kmer_files/human
- -f ../example/genomes/MTBH37RV -g ../example/genomes/chr
+$ step1 -j ../example/params.json
+```
+or if a json file does not exist/you want to overwrite parameters in the json:
+
+```bash
+$ step1 --kmer_fore ../example/kmer_files/myco --kmer_back ../example/kmer_files/human
+ --fasta_fore ../example/genomes/MTBH37RV --fasta_back ../example/genomes/chr —json_file  ../example/params.json --data_dir ../example/
 ```
 This would produce the given `.txt` files in `example/kmer_files/`.
 
@@ -82,7 +87,18 @@ A h5py files are then created for storing primers and their respective locations
 Example:
 
 ```bash
-$ step2 --min_fg_freq 1e-05 --max_fg_freq 1e-07
+$ step2 -j ../example/params.json
+```
+
+Parameters:
+min_fg_freq
+max_fg_freq
+max_gini
+min_amp_pred
+max_primer
+
+```bash
+$ step2 --min_fg_freq 1e-05 --max_fg_freq 5e-06 --max_gini 0.6 --max_primer 500 --min_amp_pred 5
 ```
 
 ### Step 3: Amplification efficacy scoring
@@ -92,12 +108,22 @@ In this step, before we optimize over the combinatorial space of primer sets, we
 Example:
 
 ```bash
+$ step3 -j ../example/params.json
+```
+or if a json file does not exist/you want to overwrite parameters in the json:
+
+```bash
 $ step3 --min_amp_pred 5
 ```
 
 ### Step 4: Primer set search and evaluation
 
 Using the filtered list of primers from the previous step, SOAPswga searches for primer sets using a machine-learning guided scoring function and a breadth-first, greedy approach. At a high level, `max_sets` number of top primer sets are built-in parallel, primer by primer, by adding primers which increases the evaluations score the most. More specifically, we run the following algorithm. 
+
+
+```bash
+$ step4 -j ../example/params.json
+```
 
 ```bash
 $ step4 --max-sets 5 --drop_iterations [4]
