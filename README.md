@@ -52,7 +52,7 @@ The k-mer files for the target and off-target gnomes will be output to a file wi
 For example, if you have a ready json_file (see example/params.json) you can run 
 
 ```bash
-$ step1 -j example.json
+$ step1 -j path_to_json/your_json.json
 ```
 and for each prefix in `fg_prefixes` and `bg_prefixes`, a file with suffixes `_Xmer_all.txt` for X = 6 to 12 containing all k-mers of length X. The program will use the fasta file in `fg_genomes` or `bg_genomes` at the corresponding index. Thus, `fg_prefixes` should have the same length as `fg_genomes` and the same for `bg_prefixes` and `bg_genomes`. It they do not have the same length, the name of the fasta file will be used as the file prefix but at the path specified by `fg_prefixes` or `bg_prefixes` if it exists.
 
@@ -91,11 +91,11 @@ $ step2 -j ../example/params.json
 ```
 
 Parameters:
-min_fg_freq
-max_fg_freq
-max_gini
-min_amp_pred
-max_primer
+-min_fg_freq
+-max_fg_freq
+-max_gini
+-min_amp_pred
+-max_primer
 
 ```bash
 $ step2 --min_fg_freq 1e-05 --max_fg_freq 5e-06 --max_gini 0.6 --max_primer 500 --min_amp_pred 5
