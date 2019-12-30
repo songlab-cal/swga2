@@ -91,11 +91,11 @@ $ step2 -j ../example/params.json
 ```
 
 Parameters:
--min_fg_freq
--max_fg_freq
--max_gini
--min_amp_pred
--max_primer
+- min_fg_freq
+- max_fg_freq
+- max_gini
+- min_amp_pred
+- max_primer
 
 ```bash
 $ step2 --min_fg_freq 1e-05 --max_fg_freq 5e-06 --max_gini 0.6 --max_primer 500 --min_amp_pred 5
