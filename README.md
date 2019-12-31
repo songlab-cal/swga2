@@ -52,13 +52,13 @@ The k-mer files for the target and off-target gnomes will be output to a file wi
 For example, if you have a ready json_file (see example/params.json) you can run 
 
 ```bash
-$ step1 -j path_to_json/your_json.json
+$ step1 -j example.json
 ```
 and for each prefix in `fg_prefixes` and `bg_prefixes`, a file with suffixes `_Xmer_all.txt` for X = 6 to 12 containing all k-mers of length X. The program will use the fasta file in `fg_genomes` or `bg_genomes` at the corresponding index. Thus, `fg_prefixes` should have the same length as `fg_genomes` and the same for `bg_prefixes` and `bg_genomes`. It they do not have the same length, the name of the fasta file will be used as the file prefix but at the path specified by `fg_prefixes` or `bg_prefixes` if it exists.
 
 Alternatively, if there is no pre-existing json file, the k-mer files for the target and off-target gnomes will be output to a file with a path prefix determined by command line parameters `-k` or `--kmer-fore` and `-j` or `--kmer-back`, respectively. 
 
-The genome files will be read from the `fg_genomes` and `bg_genomes` entries in the json file or by using all files with the path prefix determined by command line parameters `-f` or `--fasta-fore` and `g` or `--fasta-back`
+The genome files will be read from the `fg_genomes` and `bg_genomes` entries in the json file or by using all files with the path prefix determined by command line parameters `-f` or `--fasta-fore` and `g` or `--fasta-back`. 
 
 Example:
 
@@ -69,9 +69,18 @@ or if a json file does not exist/you want to overwrite parameters in the json:
 
 ```bash
 $ step1 --kmer_fore ../example/kmer_files/myco --kmer_back ../example/kmer_files/human
- --fasta_fore ../example/genomes/MTBH37RV --fasta_back ../example/genomes/chr —json_file  ../example/params.json --data_dir ../example/
+ --fasta_fore ../example/genomes/MTBH37RV --fasta_back ../example/genomes/chr --json_file  ../example/params.json --data_dir ../example/
 ```
-This would produce the given `.txt` files in `example/kmer_files/`.
+This would produce the given `.txt` files in `example/kmer_files/` and it would use all the fasta files with the path prefix `../example/genomes/MTBH37RV` and `../example/genomes/chr`.
+
+####Step 1 relevant parameters
+| Short option | Long option | Default value | Description |
+| ------------- | ------------- | ------------- | ------------- |
+| -k | --kmer_fore | None | path prefix for the kmer files of the target genomes | 
+| -j | --kmer_back | None | path prefix for the kmer files of the off-target genomes |
+| -f | --fasta_fore | None | path or path prefix to the fasta files of the on-target genomes | 
+| -g | --fasta_back | None | path or path prefix to the fasta files of the off-target genomes |
+| -j | --json_file | None | path of json file, either existing or to be written |
 
 ### Step 2: Candidate primer filtering 
 
@@ -90,18 +99,28 @@ Example:
 $ step2 -j ../example/params.json
 ```
 
-Parameters:
-- min_fg_freq
-- max_fg_freq
-- max_gini
-- min_amp_pred
-- max_primer
+####Step 2 relevant parameters
+- kmer_fore: path prefix for the kmer files of the target genomes
+- kmer_back: path prefix for the kmer files of the off-target genomes
+- fasta_fore: path or path prefix to the fasta files of the on-target genomes
+- fasta_back: path or path prefix to the fasta files of the off-target genomes
+- min_fg_freq: minimum normalized frequency of occurrences of the candidate primer in the foreground genomes
+- max_fg_freq: maximum normalized frequency of occurrences of the candidate primer in the foreground genomes
+- max_gini: 
+- min_amp_pred:
+- max_primer:
+- min_tm:
+- max_tm:
+- max_self_dimer_bp:
+- cpus: number of cpus to use for multi-processed tasks
+- json_file: path of json file, either existing or to be written
+
 
 ```bash
 $ step2 --min_fg_freq 1e-05 --max_fg_freq 5e-06 --max_gini 0.6 --max_primer 500 --min_amp_pred 5
 ```
 
-### Step 3: Amplification efficacy scoring
+###Step 3: Amplification efficacy scoring
 
 In this step, before we optimize over the combinatorial space of primer sets, we predict the on-target amplification value for each individual candidate primer from the previous step. Afterwards, we filter out according to the minimum predicted on-target amplification threshold (`min_amp_pred`) parameter, which by default is set to 5. This step significantly reduces search computation by weeding out low-amplification primers. 
 
@@ -115,6 +134,9 @@ or if a json file does not exist/you want to overwrite parameters in the json:
 ```bash
 $ step3 --min_amp_pred 5
 ```
+####Step 3 relevant parameters
+- min_amp_pred:
+- cpus:
 
 ### Step 4: Primer set search and evaluation
 
@@ -128,3 +150,13 @@ $ step4 -j ../example/params.json
 ```bash
 $ step4 --max-sets 5 --drop_iterations [4]
 ```
+
+####Step 4 relevant parameters
+- max_dimer_bp:
+- selection_metrix:
+- iterations:
+- max_sets:
+- fg_circular:
+- bg_circular:
+- drop_iterations: 
+- cpus:
