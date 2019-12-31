@@ -73,7 +73,7 @@ $ step1 --kmer_fore ../example/kmer_files/myco --kmer_back ../example/kmer_files
 ```
 This would produce the given `.txt` files in `example/kmer_files/` and it would use all the fasta files with the path prefix `../example/genomes/MTBH37RV` and `../example/genomes/chr`.
 
-####Step 1 relevant parameters
+#### Step 1 relevant parameters
 
 | Short option | Long option | Default value | Description |
 | ------------- | ------------- | ------------- | ------------- |
@@ -100,11 +100,15 @@ Example:
 $ step2 -j ../example/params.json
 ```
 
-####Step 2 relevant parameters
-- kmer_fore: path prefix for the kmer files of the target genomes
-- kmer_back: path prefix for the kmer files of the off-target genomes
-- fasta_fore: path or path prefix to the fasta files of the on-target genomes
-- fasta_back: path or path prefix to the fasta files of the off-target genomes
+#### Step 2 relevant parameters
+| Short option | Long option | Default value | Description |
+| ------------- | ------------- | ------------- | ------------- |
+| -k | --kmer_fore | None | path prefix for the kmer files of the target genomes | 
+| -j | --kmer_back | None | path prefix for the kmer files of the off-target genomes |
+| -f | --fasta_fore | None | path or path prefix to the fasta files of the on-target genomes | 
+| -g | --fasta_back | None | path or path prefix to the fasta files of the off-target genomes |
+| -j | --json_file | None | path of json file, either existing or to be written |
+
 - min_fg_freq: minimum normalized frequency of occurrences of the candidate primer in the foreground genomes
 - max_fg_freq: maximum normalized frequency of occurrences of the candidate primer in the foreground genomes
 - max_gini: 
@@ -121,7 +125,7 @@ $ step2 -j ../example/params.json
 $ step2 --min_fg_freq 1e-05 --max_fg_freq 5e-06 --max_gini 0.6 --max_primer 500 --min_amp_pred 5
 ```
 
-###Step 3: Amplification efficacy scoring
+### Step 3: Amplification efficacy scoring
 
 In this step, before we optimize over the combinatorial space of primer sets, we predict the on-target amplification value for each individual candidate primer from the previous step. Afterwards, we filter out according to the minimum predicted on-target amplification threshold (`min_amp_pred`) parameter, which by default is set to 5. This step significantly reduces search computation by weeding out low-amplification primers. 
 
@@ -135,7 +139,7 @@ or if a json file does not exist/you want to overwrite parameters in the json:
 ```bash
 $ step3 --min_amp_pred 5
 ```
-####Step 3 relevant parameters
+#### Step 3 relevant parameters
 - min_amp_pred:
 - cpus:
 
@@ -152,7 +156,7 @@ $ step4 -j ../example/params.json
 $ step4 --max-sets 5 --drop_iterations [4]
 ```
 
-####Step 4 relevant parameters
+#### Step 4 relevant parameters
 - max_dimer_bp:
 - selection_metrix:
 - iterations:
