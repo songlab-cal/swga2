@@ -74,6 +74,7 @@ $ step1 --kmer_fore ../example/kmer_files/myco --kmer_back ../example/kmer_files
 This would produce the given `.txt` files in `example/kmer_files/` and it would use all the fasta files with the path prefix `../example/genomes/MTBH37RV` and `../example/genomes/chr`.
 
 ####Step 1 relevant parameters
+
 | Short option | Long option | Default value | Description |
 | ------------- | ------------- | ------------- | ------------- |
 | -k | --kmer_fore | None | path prefix for the kmer files of the target genomes | 
