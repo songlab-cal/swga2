@@ -135,6 +135,8 @@ or if a json file does not exist/you want to overwrite parameters in the json:
 $ step3 --min_amp_pred 5
 ```
 #### Step 3 relevant parameters
+| Short option | Long option | Default value | Description |
+| ------------- | ------------- | ------------- | ------------- |
 | -j | --json_file | None | path of json file, either existing or to be written |
 | -a | --min_amp_pred | 5 | minimum amplification score from random forest regressor |
 | -c | --cpus | all cpus | number of cpus to use for multi-processed tasks |
@@ -153,6 +155,8 @@ $ step4 --max-sets 5 --drop_iterations [4]
 ```
 
 #### Step 4 relevant parameters
+| Short option | Long option | Default value | Description |
+| ------------- | ------------- | ------------- | ------------- |
 | -j | --json_file | None | path of json file, either existing or to be written |
 | -r | --max_dimer_bp | 4 | maximum number of complementary base pairs |
 | -s | --selection_method | 'deterministic' | selection method for choosing the next top primer sets |
