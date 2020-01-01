@@ -118,9 +118,9 @@ $ step2 -j ../example/params.json
 | -c | --cpus | all cpus | number of cpus to use for multi-processed tasks |
 | -z | --data_dir | soapswga/project/ | the project directory where metadata files will be stored |
 
-```bash
+<!-- ```bash
 $ step2 --min_fg_freq 1e-05 --max_fg_freq 5e-06 --max_gini 0.6 --max_primer 500 --min_amp_pred 5
-```
+``` -->
 
 ### Step 3: Amplification efficacy scoring
 
@@ -133,9 +133,9 @@ $ step3 -j ../example/params.json
 ```
 or if a json file does not exist/you want to overwrite parameters in the json:
 
-```bash
+<!-- ```bash
 $ step3 --min_amp_pred 5
-```
+``` -->
 #### Step 3 relevant parameters
 | Short option | Long option | Default value | Description |
 | ------------- | ------------- | ------------- | ------------- |
@@ -153,9 +153,9 @@ Using the filtered list of primers from the previous step, SOAPswga searches for
 $ step4 -j ../example/params.json
 ```
 
-```bash
+<!-- ```bash
 $ step4 --max-sets 5 --drop_iterations [4]
-```
+``` -->
 
 #### Step 4 relevant parameters
 | Short option | Long option | Default value | Description |
