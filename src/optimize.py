@@ -183,7 +183,7 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
     print(banned_primers)
 
     # choose the one with the maximum score
-    for iter in range(iterations):
+    for iter in range(1, iterations):
 
         next_top_sets_all = []  #Selected sets of the iteration using the ith top set.
         next_top_scores_all = []
