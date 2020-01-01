@@ -79,9 +79,9 @@ This would produce the given `.txt` files in `example/kmer_files/` and it would 
 | ------------- | ------------- | ------------- | ------------- |
 | -j | --json_file | None | path of json file, either existing or to be written |
 | -k | --kmer_fore | None | path prefix for the kmer files of the target genomes | 
-| -j | --kmer_back | None | path prefix for the kmer files of the off-target genomes |
-| -f | --fasta_fore | None | path or path prefix to the fasta files of the on-target genomes | 
-| -g | --fasta_back | None | path or path prefix to the fasta files of the off-target genomes |
+| -l | --kmer_back | None | path prefix for the kmer files of the off-target genomes |
+| -x | --fasta_fore | None | path or path prefix to the fasta files of the on-target genomes | 
+| -y | --fasta_back | None | path or path prefix to the fasta files of the off-target genomes |
 
 ### Step 2: Candidate primer filtering 
 
@@ -163,3 +163,24 @@ $ step4 --max-sets 5 --drop_iterations [4]
 | -d | --drop_iterations | [5] | the iterations which will have drop out |
 | -i | --iterations | 10 | number of iterations to run the primer set search; the maximum length of the resulting primer sets will be the number of iterations minus the number of drop iterations |
 | -c | --cpus | all cpus | number of cpus to use for multi-processed tasks |
+
+### All parameters
+| Short option | Long option | Default value | Description |
+| ------------- | ------------- | ------------- | ------------- |
+| -j | --json_file | None | path of json file, either existing or to be written |
+| -k | --kmer_fore | None | path prefix for the kmer files of the target genomes | 
+| -l | --kmer_back | None | path prefix for the kmer files of the off-target genomes |
+| -x | --fasta_fore | None | path or path prefix to the fasta files of the on-target genomes | 
+| -y | --fasta_back | None | path or path prefix to the fasta files of the off-target genomes |
+| -c | --cpus | all cpus | number of cpus to use for multi-processed tasks |
+| -u | --min_fg_freq | 1e-5 | minimum normalized frequency of occurrences of the candidate primer in the foreground genomes |
+| -v | --max_bg_freq | 5e-5 | maximum normalized frequency of occurrences of the candidate primer in the background genomes |
+| -g | --max_gini | 0.6 | maximum Gini index of gap distances |
+| -m | --min_tm | 15 | minimum predicted melting temperature |
+| -n | --max_tm | 45 | maximum predicted melting temperature |
+| -e | --max_self_dimer_bp | 4 | maximum number of self-complementary base pairs |
+| -a | --min_amp_pred | 5 | minimum amplification score from random forest regressor |
+| -r | --max_dimer_bp | 4 | maximum number of complementary base pairs |
+| -s | --selection_method | 'deterministic' | selection method for choosing the next top primer sets |
+| -d | --drop_iterations | [5] | the iterations which will have drop out |
+| -i | --iterations | 10 | number of iterations to run the primer set search; the maximum length of the resulting primer sets will be the number of iterations minus the number of drop iterations |
