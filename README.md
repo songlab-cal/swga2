@@ -5,7 +5,7 @@
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Workflow](#workflow)
-* [Parameters](#parameters)
+* [All parameters](#parameters)
 
 ## Introduction 
 
@@ -164,7 +164,7 @@ $ step4 --max-sets 5 --drop_iterations [4]
 | -i | --iterations | 10 | number of iterations to run the primer set search; the maximum length of the resulting primer sets will be the number of iterations minus the number of drop iterations |
 | -c | --cpus | all cpus | number of cpus to use for multi-processed tasks |
 
-### All parameters
+## All parameters
 | Short option | Long option | Default value | Description |
 | ------------- | ------------- | ------------- | ------------- |
 | -j | --json_file | None | path of json file, either existing or to be written |
