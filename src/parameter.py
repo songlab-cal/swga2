@@ -1,7 +1,7 @@
 import os
 import multiprocessing
 import json
-import utility
+import src.utility
 
 src_dir=os.path.dirname(os.path.abspath(__file__))
 
@@ -79,7 +79,7 @@ def write_args_to_json(args, out_fname=None):
     cpus = data['cpus'] = args.cpus
     max_dimer_bp = data['max_dimer_bp'] = args.max_dimer_bp
     max_self_dimer_bp = data['max_self_dimer_bp'] = args.max_self_dimer_bp
-    mismatch_penalty = data['mismatch_penalty'] = args.mismatch_penalty
+    # mismatch_penalty = data['mismatch_penalty'] = args.mismatch_penalty
 
     if args.fasta_fore is not None:
         data['fg_genomes'] = get_all_files(args.fasta_fore)
@@ -99,10 +99,12 @@ def write_args_to_json(args, out_fname=None):
         else:
             data['bg_prefixes'] = [args.kmer_back]
 
+    print(data)
+
     if 'fg_seq_lengths' not in data or len(data['fg_seq_lengths']) != len(data['fg_genomes']):
-        data['fg_seq_lengths'] = utility.get_all_seq_lengths(fname_genomes=data['fg_genomes'], cpus=data['cpus'])
+        data['fg_seq_lengths'] = src.utility.get_all_seq_lengths(fname_genomes=data['fg_genomes'], cpus=data['cpus'])
     if 'bg_seq_lengths' not in data or len(data['bg_seq_lengths']) != len(data['bg_genomes']):
-        data['bg_seq_lengths'] = utility.get_all_seq_lengths(fname_genomes=data['bg_genomes'], cpus=data['cpus'])
+        data['bg_seq_lengths'] = src.utility.get_all_seq_lengths(fname_genomes=data['bg_genomes'], cpus=data['cpus'])
 
     with open(data['json_file'], 'w+') as outfile:
         json.dump(data, outfile, indent=4)

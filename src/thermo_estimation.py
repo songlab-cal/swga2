@@ -1,5 +1,4 @@
-import utility
-import parameter
+import src.utility
 
 #Global values for the thermodynamic nearest-neighbor model
 delta_G_vals = {'GA/CA': 0.17,
@@ -90,7 +89,7 @@ def compute_free_energy_per_nn(doublet_1, doublet_2, penalty):
 
 # ASSUMES THAT THEY ARE OF THE FORM IN SANTA LUCIA PAPER.
 # x is assumed 5' to 3' and y is assumed 3' to 5'
-def compute_free_energy_for_two_strings(x, y, penalty=parameter.mismatch_penalty):
+def compute_free_energy_for_two_strings(x, y, penalty=4):
     """Computes the delta G values for between two DNA sequences using the thermodynamic nearest-neighbor model.
 
     Args:
@@ -106,17 +105,17 @@ def compute_free_energy_for_two_strings(x, y, penalty=parameter.mismatch_penalty
     y = y.upper()
     delta_G = 0
 
-    if x[0] == utility.complement(y[0]):
+    if x[0] == src.utility.complement(y[0]):
         delta_G = nn_init_corrections[x[0]+'/'+y[0]]
 
-    if x[-1] == utility.complement(y[-1]):
+    if x[-1] == src.utility.complement(y[-1]):
         delta_G += nn_init_corrections[x[-1]+'/'+y[-1]]
 
     for i in range(1, len(x)):
         delta_G += compute_free_energy_per_nn(x[i - 1:i + 1], y[i - 1:i + 1], penalty)
         if delta_G > penalty * 10:
             break
-    if utility.complement(x) == utility.reverse(y):
+    if src.utility.complement(x) == src.utility.reverse(y):
         delta_G += 0.43
     return delta_G
 

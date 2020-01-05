@@ -1,11 +1,11 @@
 import os
-import parameter
+import src.parameter
 import melting
 
 def run_jellyfish(genome_fname=None, output_prefix=None):
     for k in range(6, 13, 1):
         if not os.path.exists(output_prefix+'_'+str(k)+'mer_all.txt'):
-            os.system("jellyfish count -m "+str(k) + " -s 1000000 -t " + str(parameter.cpus) + " " + genome_fname + " -o " + output_prefix+'_'+str(k)+'mer_all.jf')
+            os.system("jellyfish count -m "+str(k) + " -s 1000000 -t " + str(src.parameter.cpus) + " " + genome_fname + " -o " + output_prefix+'_'+str(k)+'mer_all.jf')
             os.system("jellyfish dump -c " + output_prefix+'_'+str(k)+'mer_all.jf' + " > " + output_prefix+'_'+str(k)+'mer_all.txt')
         if os.path.exists(output_prefix+'_'+str(k)+'mer_all.jf'):
             os.system("rm " + output_prefix+'_'+str(k)+'mer_all.jf')
@@ -33,7 +33,7 @@ def get_primer_list_from_kmers(prefixes, kmer_lengths=None):
                 for line in f_in:
                     curr_kmer = line.split(" ")[0]
                     tm = melting.temp(curr_kmer)
-                    if tm < parameter.max_tm and tm > parameter.min_tm:
+                    if tm < src.parameter.max_tm and tm > src.parameter.min_tm:
                         primer_list.append(curr_kmer)
 
     return primer_list

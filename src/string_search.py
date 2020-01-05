@@ -1,5 +1,5 @@
-import utility
-import parameter
+import src.utility
+import src.parameter
 import multiprocessing
 import h5py
 import os
@@ -13,7 +13,7 @@ def get_all_positions_per_k(kmer_list, seq_fname=None, fname_prefix=None):
     for kmer in kmer_list:
         kmer_dict[kmer] = []
 
-    seq = utility.read_fasta_file(seq_fname)
+    seq = src.utility.read_fasta_file(seq_fname)
     current_text = ''.join([next(seq) for _ in range(k)])
 
     if fname_prefix is not None:
@@ -87,7 +87,7 @@ def append_positions_to_h5py_file(task):
         return
 
     new_list = set(primer_list)
-    new_list.update([utility.reverse_complement(primer) for primer in new_list])
+    new_list.update([src.utility.reverse_complement(primer) for primer in new_list])
     one_k_list = [primer for primer in sorted(list(new_list)) if len(primer) == k]
 
     if not overwrite:
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     k = 6
     output_prefix = 'kmer_files/myco'
 
-    test_txt = parameter.data_dir + output_prefix + '_' + str(k) + 'mer.txt'
+    test_txt = src.parameter.data_dir + output_prefix + '_' + str(k) + 'mer.txt'
 
-    kmer_dict = get_all_positions_per_k(["CCGAATCG"], seq_fname=parameter.data_dir + 'genomes/chr2.fa')
+    kmer_dict = get_all_positions_per_k(["CCGAATCG"], seq_fname=src.parameter.data_dir + 'genomes/chr2.fa')
     print(len(kmer_dict["CCGAATCG"]))

@@ -15,9 +15,10 @@ setuptools.setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License (GPL)'
     ],  
-    include_package_data=True,
-    url='https://github.com/eclarke/swga',
+    packages=setuptools.find_packages(),
+    url='https://github.com/janeaisley/soapswga',
     license='LICENSE.txt',
     description='Pipeline to select primer sets for selective whole-genome amplification.',
-    long_description=open('README.md').read()
+    long_description=open('README.md').read(),
+    entry_points={'console_scripts': ['step1 = src.pipeline:step1']}
 )

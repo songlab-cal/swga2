@@ -1,11 +1,11 @@
-import parameter
-import primer_attributes
+import src.parameter
+import src.primer_attributes
 from collections import Counter
 import pickle
 import pandas as pd
 import melting
 import multiprocessing
-import dimer
+import src.dimer
 
 def filter_extra(primer, verbose=False):
     #1 Avoid using three G or C nucleotides in a row at the 3′-end of a primer.
@@ -111,7 +111,7 @@ def filter_extra(primer, verbose=False):
     return True
 
 #fg_rate and bg_rate should be the number of binding sites scaled by the genome length
-def get_all_rates(primer_list, fg_prefixes, bg_prefixes, fg_total_length, bg_total_length, output_df_fname=parameter.data_dir + 'primer_candidate_list_myco_human.p'):
+def get_all_rates(primer_list, fg_prefixes, bg_prefixes, fg_total_length, bg_total_length, output_df_fname=src.parameter.data_dir + 'primer_candidate_list_myco_human.p'):
 
     primer_to_fg_count = get_rates_for_one_species(primer_list, fg_prefixes)
     primer_to_bg_count = get_rates_for_one_species(primer_list, bg_prefixes)
@@ -177,7 +177,7 @@ def get_rate_for_one_file(task):
             all_counts.append(0)
     return dict(zip(primer_list, all_counts))
 
-def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df=None, input_df_fname=parameter.data_dir + 'primer_candidate_list_myco_human.p'):
+def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df=None, input_df_fname=src.parameter.data_dir + 'primer_candidate_list_myco_human.p'):
     if df is None:
         df = pickle.load(open(input_df_fname, 'rb'))
     df['gini'] = primer_attributes.get_gini_from_txt(df['primer'].values, fg_prefixes, fg_genomes, fg_seq_lengths)
@@ -187,7 +187,7 @@ def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df=None, input_df_fname=pa
         df['gini_bool'] = []
         return df
 
-    df['gini_bool'] = df.apply(lambda x: x['gini'] is not None and x['gini'] < parameter.max_gini, axis=1)
+    df['gini_bool'] = df.apply(lambda x: x['gini'] is not None and x['gini'] < src.parameter.max_gini, axis=1)
 
     return df
 

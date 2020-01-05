@@ -1,0 +1,12 @@
+et-xmlfile==1.0.1
+h5py==2.10.0
+jdcal==1.4.1
+joblib==0.14.1
+melt==1.0.3
+numpy==1.18.0
+openpyxl==3.0.2
+scikit-learn==0.22.1
+scipy==1.4.1
+six==1.13.0
+sklearn==0.0
+SOAPswga==0.0.1

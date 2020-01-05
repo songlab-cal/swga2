@@ -1,9 +1,9 @@
-import optimize
-import utility
+import src.optimize
+import src.utility
 import os
 import h5py
 import melting
-import string_search
+import src.string_search
 import multiprocessing
 import numpy as np
 
@@ -17,28 +17,28 @@ def get_gini(primer, fname_prefixes):
         if os.path.exists(fname_prefix + '_' + str(k) + 'mer_positions.h5'):
             db=h5py.File(fname_prefix + '_' + str(k) + 'mer_positions.h5','r')
             if primer in db:
-                position_diffs_forward = optimize.get_positional_gap_lengths(db[primer])
+                position_diffs_forward = src.optimize.get_positional_gap_lengths(db[primer])
                 positions_diffs.extend(position_diffs_forward)
-            if utility.reverse_complement(primer) in db:
-                position_diffs_reverse = optimize.get_positional_gap_lengths(db[utility.reverse_complement(primer)])
+            if src.utility.reverse_complement(primer) in db:
+                position_diffs_reverse = src.optimize.get_positional_gap_lengths(db[src.utility.reverse_complement(primer)])
                 positions_diffs.extend(position_diffs_reverse)
         else:
             print("Cannot find file: " + fname_prefix)
-    gini = utility.gini(positions_diffs)
+    gini = src.utility.gini(positions_diffs)
     return gini
 
 def get_gini_from_txt_for_one_k(task):
     primer_list, fname_prefix, fname_genome, seq_length, k = task
-    rc_primer_list = [utility.reverse_complement(primer) for primer in primer_list]
+    rc_primer_list = [src.utility.reverse_complement(primer) for primer in primer_list]
     all_primer_list = list(set(primer_list + rc_primer_list))
-    kmer_dict = string_search.get_all_positions_per_k(kmer_list=all_primer_list, seq_fname=fname_genome,fname_prefix=fname_prefix)
+    kmer_dict = src.string_search.get_all_positions_per_k(kmer_list=all_primer_list, seq_fname=fname_genome,fname_prefix=fname_prefix)
     ginis = []
 
     for primer in primer_list:
-        position_diffs_forward = optimize.get_positional_gap_lengths(kmer_dict[primer], seq_length=seq_length)
-        gini_forward = utility.gini_exact(position_diffs_forward)
-        position_diffs_reverse = optimize.get_positional_gap_lengths(kmer_dict[utility.reverse_complement(primer)], seq_length=seq_length)
-        gini_reverse = utility.gini_exact(position_diffs_reverse)
+        position_diffs_forward = src.optimize.get_positional_gap_lengths(kmer_dict[primer], seq_length=seq_length)
+        gini_forward = src.utility.gini_exact(position_diffs_forward)
+        position_diffs_reverse = src.optimize.get_positional_gap_lengths(kmer_dict[src.utility.reverse_complement(primer)], seq_length=seq_length)
+        gini_reverse = src.utility.gini_exact(position_diffs_reverse)
         ginis.append((gini_forward, gini_reverse))
 
     return dict(zip(primer_list, ginis))
@@ -70,8 +70,8 @@ def get_rate_from_h5py(primer, fname_prefixes):
             db=h5py.File(fname_prefix + '_' + str(k) + 'mer_positions.h5','r')
             if primer in db:
                 count += len(db[primer])
-            if utility.reverse_complement(primer) in db:
-                count += len(db[utility.reverse_complement(primer)])
+            if src.utility.reverse_complement(primer) in db:
+                count += len(db[src.utility.reverse_complement(primer)])
         else:
             print("Cannot find file: " + fname_prefix)
     return count

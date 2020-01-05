@@ -1,13 +1,13 @@
-import thermo_estimation as te
-import utility
+import src.thermo_estimation as te
+import src.utility
 import pandas as pd
 from functools import partial
-import parameter
+import src.parameter
 import numpy as np
 import pickle
 import melting
 import os
-import kmer
+import src.kmer
 import sklearn
 
 base_features = ['molarity', 'sequence.length', 'number.of.A', 'proportion.of.A', 'number.of.T', 'proportion.of.T', 'number.of.G', 'proportion.of.G', 'number.of.C', 'proportion.of.C', 'GC.content', 'melting_tm', 'GC.clamp', 'longest.A.repeat', 'longest.T.repeat', 'longest.G.repeat', 'longest.C.repeat', 'AA repeat', 'CC repeat', 'TT repeat', 'GG repeat', '3.end.first.base', '3.end.second.base', '3.end.third.base', '3.end.fourth.base', '3.end.fifth.base']
@@ -37,10 +37,10 @@ def get_features(primer, target=None, molarity=2.5):
 
     feature_dict['GC.content'] = (feature_dict['number.of.G'] + feature_dict['number.of.C'])/ feature_dict['sequence.length']
 
-    feature_dict['longest.A.repeat'] = utility.longest_char_repeat(primer,'A')
-    feature_dict['longest.G.repeat'] = utility.longest_char_repeat(primer, 'G')
-    feature_dict['longest.T.repeat'] = utility.longest_char_repeat(primer, 'T')
-    feature_dict['longest.C.repeat'] = utility.longest_char_repeat(primer, 'C')
+    feature_dict['longest.A.repeat'] =  src.utility.longest_char_repeat(primer,'A')
+    feature_dict['longest.G.repeat'] =  src.utility.longest_char_repeat(primer, 'G')
+    feature_dict['longest.T.repeat'] =  src.utility.longest_char_repeat(primer, 'T')
+    feature_dict['longest.C.repeat'] =  src.utility.longest_char_repeat(primer, 'C')
 
     feature_dict['AA repeat'] = primer.count('AA')
     feature_dict['GG repeat'] = primer.count('GG')
@@ -53,11 +53,11 @@ def get_features(primer, target=None, molarity=2.5):
     last_five_end = primer[:-5]
     feature_dict['GC.clamp'] = last_five_end.count('C') + last_five_end.count('G')
 
-    feature_dict['3.end.first.base'] = utility.char_to_int_dict[primer[-1]]
-    feature_dict['3.end.second.base'] = utility.char_to_int_dict[primer[-2]]
-    feature_dict['3.end.third.base'] = utility.char_to_int_dict[primer[-3]]
-    feature_dict['3.end.fourth.base'] = utility.char_to_int_dict[primer[-4]]
-    feature_dict['3.end.fifth.base'] = utility.char_to_int_dict[primer[-5]]
+    feature_dict['3.end.first.base'] =  src.utility.char_to_int_dict[primer[-1]]
+    feature_dict['3.end.second.base'] =  src.utility.char_to_int_dict[primer[-2]]
+    feature_dict['3.end.third.base'] =  src.utility.char_to_int_dict[primer[-3]]
+    feature_dict['3.end.fourth.base'] =  src.utility.char_to_int_dict[primer[-4]]
+    feature_dict['3.end.fifth.base'] =  src.utility.char_to_int_dict[primer[-5]]
 
     result = [primer, target]
     for feature in base_features:
@@ -67,7 +67,7 @@ def get_features(primer, target=None, molarity=2.5):
 def create_base_feature_matrix(primer_list, molarity):
     '''Creates the feature matrix, not including the delta_G features.'''
     get_features_partial = partial(get_features, molarity = molarity)
-    results = utility.create_pool(get_features_partial, primer_list, parameter.cpus)
+    results =  src.utility.create_pool(get_features_partial, primer_list, src.parameter.cpus)
     f = ['sequence','target']
     f.extend(base_features)
     df = pd.DataFrame(results, columns=f)
@@ -77,7 +77,7 @@ def get_all_predicted_delta_G_for_all_files_transformed(primer_list, target, fna
 
     seq_initialized_f = partial(get_all_predicted_delta_G_per_primer_transformed, fnames=fnames)
 
-    arr_transformed = utility.create_pool(seq_initialized_f, primer_list, parameter.cpus)           #this is the results, its in the form of list of lists of length 2 containing
+    arr_transformed =  src.utility.create_pool(seq_initialized_f, primer_list, src.parameter.cpus)           #this is the results, its in the form of list of lists of length 2 containing
 
     if target:
         columns = ["on_target_" + str(i) for i in bins[1:]]
@@ -91,16 +91,16 @@ def get_all_predicted_delta_G_for_all_files_transformed(primer_list, target, fna
 
     return df
 
-def get_all_predicted_delta_G_per_primer_transformed(primer, fnames=None, penalty=parameter.mismatch_penalty):
+def get_all_predicted_delta_G_per_primer_transformed(primer, fnames=None, penalty=4):
     k = len(primer)
 
     all_delta_G_vals = [0 for i in range(len(bins)-1)]
 
     for fname_prefix in fnames:
         if os.path.exists(fname_prefix + '_' + str(k) + 'mer_all.txt'):
-            for kmer_i, count in kmer.get_kmer_to_count_dict(fname_prefix + '_' + str(k) + 'mer_all.txt').items():
-                delta_G_val_forward = te.compute_free_energy_for_two_strings(kmer_i, utility.reverse(primer), penalty)
-                delta_G_val_reverse = te.compute_free_energy_for_two_strings(primer, utility.complement(kmer_i), penalty)  # this is to search the backward strand, but we don't need to reverse it
+            for kmer_i, count in src.kmer.get_kmer_to_count_dict(fname_prefix + '_' + str(k) + 'mer_all.txt').items():
+                delta_G_val_forward = te.compute_free_energy_for_two_strings(kmer_i,  src.utility.reverse(primer), penalty)
+                delta_G_val_reverse = te.compute_free_energy_for_two_strings(primer,  src.utility.complement(kmer_i), penalty)  # this is to search the backward strand, but we don't need to reverse it
 
                 if delta_G_val_forward <= histogram_upper_bound:
                     if delta_G_val_forward == histogram_upper_bound:
@@ -143,7 +143,7 @@ def predict_new_primers(df):
     X_test = df[regression_features]
     X_test = X_test.dropna(axis='columns')
 
-    clf = pickle.load(open(os.path.join(parameter.src_dir, 'random_forest_filter.p'),'rb'))
+    clf = pickle.load(open(os.path.join(src.parameter.src_dir, 'random_forest_filter.p'),'rb'))
     y_pred = clf.predict(X_test)
     output_df = pd.DataFrame(y_pred, columns=['on.target.pred'])
     output_df = pd.concat([output_df, df], axis=1)
@@ -152,6 +152,6 @@ def predict_new_primers(df):
 if __name__ == "__main__":
     pd.set_option('display.max_columns', 500)
 
-    myco_prefixes = [parameter.data_dir + 'kmer_files/myco']
+    myco_prefixes = [src.parameter.data_dir + 'kmer_files/myco']
 
     print(create_augmented_df(myco_prefixes, ['ACAACC','TACGTCA'], molarity=2.5))

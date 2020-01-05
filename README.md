@@ -39,6 +39,8 @@ To install `soapswga`
 $ pip install soapswga
 ```
 
+You'll also need [jellyfish]: https://www.cbcb.umd.edu/software/jellyfish/ which will needed to be added to your PATH.
+
 ## Workflow
 
 The general workflow has four main stages: 1) preprocessing of locations in the target and off-target genome of all motifs in the target genome, 2) filtering all motifs in the target genome based on individual primer properties and frequencies in the genomes, 3) scoring the remaining primers for amplification efficacy using a machine learning model, and 4) search and evaluate aggregations of primers as candidate primer sets.
@@ -112,9 +114,10 @@ $ step2 -j ../example/params.json
 | -u | --min_fg_freq | 1e-5 | minimum normalized frequency of occurrences of the candidate primer in the foreground genomes |
 | -v | --max_bg_freq | 5e-5 | maximum normalized frequency of occurrences of the candidate primer in the background genomes |
 | -g | --max_gini | 0.6 | maximum Gini index of gap distances |
+| -p | --max_primer | 500 | maximum number of primers to select in step 2 | 
 | -m | --min_tm | 15 | minimum predicted melting temperature |
 | -n | --max_tm | 45 | maximum predicted melting temperature |
-| -e | --max_self_dimer_bp | 4 | maximum number of self-complementary base pairs |
+| -q | --max_self_dimer_bp | 4 | maximum number of self-complementary base pairs |
 | -c | --cpus | all cpus | number of cpus to use for multi-processed tasks |
 | -z | --data_dir | soapswga/project/ | the project directory where metadata files will be stored |
 
@@ -165,6 +168,7 @@ $ step4 --max-sets 5 --drop_iterations [4]
 | -s | --selection_method | 'deterministic' | selection method for choosing the next top primer sets |
 | -d | --drop_iterations | [5] | the iterations which will have drop out |
 | -i | --iterations | 10 | number of iterations to run the primer set search; the maximum length of the resulting primer sets will be the number of iterations minus the number of drop iterations |
+| -h | --max_sets | 5 | maximum number of sets to build in parallel |
 | -c | --cpus | all cpus | number of cpus to use for multi-processed tasks |
 | -z | --data_dir | soapswga/project/ | the project directory where metadata files will be stored |
 
@@ -181,11 +185,13 @@ $ step4 --max-sets 5 --drop_iterations [4]
 | -u | --min_fg_freq | 1e-5 | minimum normalized frequency of occurrences of the candidate primer in the foreground genomes |
 | -v | --max_bg_freq | 5e-5 | maximum normalized frequency of occurrences of the candidate primer in the background genomes |
 | -g | --max_gini | 0.6 | maximum Gini index of gap distances |
+| -p | --max_primer | 500 | maximum number of primers to select in step 2 |
 | -m | --min_tm | 15 | minimum predicted melting temperature |
 | -n | --max_tm | 45 | maximum predicted melting temperature |
-| -e | --max_self_dimer_bp | 4 | maximum number of self-complementary base pairs |
+| -q | --max_self_dimer_bp | 4 | maximum number of self-complementary base pairs |
 | -a | --min_amp_pred | 5 | minimum amplification score from random forest regressor |
 | -r | --max_dimer_bp | 4 | maximum number of complementary base pairs |
 | -s | --selection_method | 'deterministic' | selection method for choosing the next top primer sets |
 | -d | --drop_iterations | [5] | the iterations which will have drop out |
 | -i | --iterations | 10 | number of iterations to run the primer set search; the maximum length of the resulting primer sets will be the number of iterations minus the number of drop iterations |
+| -h | --max_sets | 5 | maximum number of sets to build in parallel |

@@ -1,10 +1,10 @@
 import pandas as pd
-import parameter
-import utility
+import src.parameter
+import src.utility
 import scipy.sparse
 import numpy as np
 import pickle
-import dimer
+import src.dimer
 from functools import partial
 import h5py
 import scipy.stats
@@ -27,17 +27,17 @@ def search_initialization(fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, 
         print("Starting search initialization: fg")
         fg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=fg_fname_prefixes,
                                        seq_lengths_fname=fg_seq_lengths, circular=fg_circular)
-        top_fg_fname_to_positions = utility.create_pool(fg_seq_initialized_f, initial_primer_sets, parameter.cpus)
+        top_fg_fname_to_positions = src.utility.create_pool(fg_seq_initialized_f, initial_primer_sets, src.parameter.cpus)
         print("Done with initialization: fg")
 
         print("Starting search initialization: bg")
         bg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=bg_fname_prefixes,
                                        seq_lengths_fname=bg_seq_lengths, circular=bg_circular)
-        top_bg_fname_to_positions = utility.create_pool(bg_seq_initialized_f, initial_primer_sets, parameter.cpus)
+        top_bg_fname_to_positions = src.utility.create_pool(bg_seq_initialized_f, initial_primer_sets, src.parameter.cpus)
         print("Done with initialization: bg")
 
         partial_initialized_f = partial(evaluate_wrapper, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths)
-        top_scores = utility.create_pool(partial_initialized_f, zip(top_fg_fname_to_positions, top_bg_fname_to_positions), parameter.cpus)
+        top_scores = src.utility.create_pool(partial_initialized_f, zip(top_fg_fname_to_positions, top_bg_fname_to_positions), src.parameter.cpus)
 
         top_sets = initial_primer_sets
 
@@ -134,7 +134,7 @@ def bfs_one_top_set(**kwargs):
     # Make all the sets combining the i-th top set and a primer.
     for primer in primer_list:
         # if primer not in banned_primers and dimer.has_no_dimer_risk(top_set + [primer], max_dimer_bp=parameter.default_max_dimer_bp):
-        if primer not in banned_primers and dimer.compatible(dimer_mat, top_set, primer, primer_to_index_dict):
+        if primer not in banned_primers and src.dimer.compatible(dimer_mat, top_set, primer, primer_to_index_dict):
             # compressed_primer_string = get_compressed_string(top_set + [primer])
             # if compressed_primer_string not in compressed_string_to_score and primer not in top_set:
             if primer not in top_set:
@@ -168,7 +168,7 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
     print("Method: " + target_var + ', ' + selection_method)
     primer_list = sorted(list(primer_list))
     primer_to_index_dict = dict(zip(primer_list, range(len(primer_list))))
-    dimer_mat = dimer.heterodimer_matrix(primer_list, max_dimer_bp=parameter.max_dimer_bp)
+    dimer_mat = src.dimer.heterodimer_matrix(primer_list, max_dimer_bp=src.parameter.max_dimer_bp)
 
     top_sets, top_scores, top_fg_fname_to_positions, top_bg_fname_to_positions = search_initialization(fg_fname_prefixes, bg_fname_prefixes,
                                                                                  fg_seq_lengths, bg_seq_lengths,
@@ -285,7 +285,7 @@ def initialize_fname_to_positions_dict(fname_prefixes, seq_lengths):
 #Parallelizes evaluating adding all valid primers to a top set from the previous iteration.
 def parallel_set_search_one_iteration(tasks, top_set, top_fg_fname_to_positions, top_bg_fname_to_positions, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_seq_lengths, max_sets, normalize_metric='softmax', cache={}):
     seq_initialized_f = partial(evaluate_pairs_helper, curr_fg_fname_to_positions=top_fg_fname_to_positions, curr_bg_fname_to_positions = top_bg_fname_to_positions, fg_fname_prefixes=fg_fname_prefixes, bg_fname_prefixes=bg_fname_prefixes, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths)
-    results = utility.create_pool(seq_initialized_f, tasks)
+    results = src.utility.create_pool(seq_initialized_f, tasks)
 
     selection=make_selection([[task] + top_set for task in tasks], [score for score, temp_fg, temp_bg in results], min(max_sets, len(tasks)), normalize_metric)
 
@@ -313,7 +313,7 @@ def make_selection(all_sets, all_scores, max_sets, normalize_metric):
         argsort_indices = np.argsort(scores)
         selection = argsort_indices[-max_sets:]
     elif normalize_metric == 'softmax':
-        probabilities = utility.softmax(scores)
+        probabilities = src.utility.softmax(scores)
         nonzero_count = np.count_nonzero(probabilities)
         if nonzero_count != 0:
             selection = np.random.choice(range(num_tasks), size=min(nonzero_count,max_sets), replace=False, p=probabilities)
@@ -515,7 +515,7 @@ def get_positional_gap_lengths_agnostic(positions_forward, positions_reverse, se
     else:
         data['mean'] = np.mean(position_differences)
         if include_gini:
-            data['gini'] = utility.gini_exact(positions)
+            data['gini'] = src.utility.gini_exact(positions)
             data['entropy'] = scipy.stats.entropy(positions)
     return data
 
@@ -544,7 +544,7 @@ def get_position_features(positions, seq_length):
         return {'mean': seq_length, 'gini': 1}
     else:
         data['mean'] = np.mean(position_differences)
-        data['gini'] = utility.gini_exact(position_differences)
+        data['gini'] = src.utility.gini_exact(position_differences)
 
     return data
 
@@ -559,8 +559,8 @@ def get_exact_count_features_one_fname(primer_set, fname_prefix):
             if primer in db:
                 positions = db[primer]
                 curr_pos_results_forward.extend(positions)
-            if utility.reverse_complement(primer) in db:
-                positions = db[utility.reverse_complement(primer)]
+            if src.utility.reverse_complement(primer) in db:
+                positions = db[src.utility.reverse_complement(primer)]
                 curr_pos_results_reverse.extend(positions)
         else:
             print(fname_prefix + '_' + str(k) + 'mer_positions.h5 does not exist.')
@@ -612,7 +612,7 @@ def evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_leng
     all_features['agnostic_mean_gap_ratio'] = all_features['on_agnostic_mean_gap'] / all_features['off_agnostic_mean_gap']
 
     X = all_features[['ratio', 'agnostic_mean_gap_ratio', 'on_gap_gini', 'off_gap_gini', 'within_mean_gap_ratio']]
-    clf = pickle.load(open(os.path.join(parameter.src_dir, 'ratio_agnostic_mean_gap_ratio_all_ginis_within_mean_gap_ratio.p'),
+    clf = pickle.load(open(os.path.join(src.parameter.src_dir, 'ratio_agnostic_mean_gap_ratio_all_ginis_within_mean_gap_ratio.p'),
         'rb'))
 
     if return_X:
@@ -645,25 +645,25 @@ def stand_alone_score_primer_sets(primer_sets, fg_prefixes=None, bg_prefixes=Non
                       'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrM',
                       'chrX', 'chrY']
     if fg_prefixes is None:
-        fg_prefixes = [parameter.data_dir + 'kmer_files/myco']
+        fg_prefixes = [src.parameter.data_dir + 'kmer_files/myco']
     if bg_prefixes is None:
-        bg_prefixes = [parameter.data_dir + 'kmer_files/human_' + chr for chr in human_chr_list]
+        bg_prefixes = [src.parameter.data_dir + 'kmer_files/human_' + chr for chr in human_chr_list]
     if fg_seq_lengths is None:
         fg_seq_lengths = [4411532]
     if bg_seq_lengths is None:
-        bg_seq_lengths = [parameter.seq_len['human_' + chr] for chr in human_chr_list]
+        bg_seq_lengths = [src.parameter.seq_len['human_' + chr] for chr in human_chr_list]
 
     fg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=fg_prefixes,
                                    seq_lengths_fname=fg_seq_lengths, circular=fg_circular)
-    initial_fg_fname_to_positions = utility.create_pool(fg_seq_initialized_f, primer_sets)
+    initial_fg_fname_to_positions = src.utility.create_pool(fg_seq_initialized_f, primer_sets)
 
     bg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=bg_prefixes,
                                    seq_lengths_fname=bg_seq_lengths, circular=bg_circular)
-    initial_bg_fname_to_positions = utility.create_pool(bg_seq_initialized_f, primer_sets)
+    initial_bg_fname_to_positions = src.utility.create_pool(bg_seq_initialized_f, primer_sets)
 
     partial_initialized_f = partial(evaluate_wrapper, fg_seq_lengths=fg_seq_lengths,
                                     bg_seq_lengths=bg_seq_lengths)
-    top_scores = utility.create_pool(partial_initialized_f,
+    top_scores = src.utility.create_pool(partial_initialized_f,
                                      zip(initial_fg_fname_to_positions, initial_bg_fname_to_positions))
     print(primer_sets)
     print(top_scores)
@@ -678,13 +678,13 @@ if __name__ == "__main__":
     human_chr_list = ['chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12',
                       'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrM',
                       'chrX', 'chrY']
-    myco_prefixes = [parameter.data_dir + 'kmer_files/myco']
-    human_prefixes = [parameter.data_dir + 'kmer_files/human_' + chr for chr in human_chr_list]
-    human_genomes = [parameter.data_dir + 'genomes/' + chr + '.fa' for chr in human_chr_list]
-    myco_genomes = [parameter.data_dir + 'genomes/MTBH37RV.fasta']
+    myco_prefixes = [src.parameter.data_dir + 'kmer_files/myco']
+    human_prefixes = [src.parameter.data_dir + 'kmer_files/human_' + chr for chr in human_chr_list]
+    human_genomes = [src.parameter.data_dir + 'genomes/' + chr + '.fa' for chr in human_chr_list]
+    myco_genomes = [src.parameter.data_dir + 'genomes/MTBH37RV.fasta']
 
     myco_seq_lengths = [4411532]
-    human_seq_lengths = [parameter.seq_len['human_' + chr] for chr in human_chr_list]
+    human_seq_lengths = [src.parameter.seq_len['human_' + chr] for chr in human_chr_list]
 
 
 
