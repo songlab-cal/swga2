@@ -39,7 +39,7 @@ To install `soapswga`
 $ pip install soapswga
 ```
 
-You'll also need [jellyfish]: https://www.cbcb.umd.edu/software/jellyfish/ which will needed to be added to your PATH.
+You'll also need `jellyfish`, which is available at https://www.cbcb.umd.edu/software/jellyfish/ and will needed to be added to your PATH.
 
 ## Workflow
 
