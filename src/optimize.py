@@ -24,28 +24,27 @@ def search_initialization(fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, 
             initialize_fname_to_positions_dict(bg_fname_prefixes, bg_seq_lengths) for x in
             range(max_sets)]
     else:
-        print("Starting search initialization: fg")
+        print("Starting foreground search initialization...")
         fg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=fg_fname_prefixes,
                                        seq_lengths_fname=fg_seq_lengths, circular=fg_circular)
         top_fg_fname_to_positions = src.utility.create_pool(fg_seq_initialized_f, initial_primer_sets, src.parameter.cpus)
-        print("Done with initialization: fg")
+        print("Done with foreground initialization.")
 
-        print("Starting search initialization: bg")
+        print("Starting background search initialization...")
         bg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=bg_fname_prefixes,
                                        seq_lengths_fname=bg_seq_lengths, circular=bg_circular)
         top_bg_fname_to_positions = src.utility.create_pool(bg_seq_initialized_f, initial_primer_sets, src.parameter.cpus)
-        print("Done with initialization: bg")
+        print("Done with background search initialization.")
 
         partial_initialized_f = partial(evaluate_wrapper, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths)
-        top_scores = src.utility.create_pool(partial_initialized_f, zip(top_fg_fname_to_positions, top_bg_fname_to_positions), src.parameter.cpus)
+        top_scores = src.utility.create_pool(partial_initialized_f, list(zip(top_fg_fname_to_positions, top_bg_fname_to_positions)), src.parameter.cpus)
 
         top_sets = initial_primer_sets
 
     return top_sets, top_scores, top_fg_fname_to_positions, top_bg_fname_to_positions
 
-def random_intial_start(primers, scores, max_sets):
+def random_initial_start(primers, scores, max_sets):
     selection = make_selection(primers, scores, max_sets, 'normalized')
-    print(selection)
     next_top_sets = [list(primers[i]) for i in selection]
     return next_top_sets
 
@@ -64,26 +63,25 @@ def drop_out_layer(primer_sets, cache, fg_prefixes=None, bg_prefixes=None, fg_se
             if compressed_primer_string not in cache:
                 tasks.append(primer_set_sub)
                 cache[compressed_primer_string] = 0
-            print(primer_set_sub)
 
         fg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=fg_prefixes,
                                        seq_lengths_fname=fg_seq_lengths, circular=fg_circular)
-        curr_fg_fname_to_positions = utility.create_pool(fg_seq_initialized_f, tasks)
+        curr_fg_fname_to_positions = src.utility.create_pool(fg_seq_initialized_f, tasks, cpus=src.parameter.cpus)
 
         bg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=bg_prefixes,
                                        seq_lengths_fname=bg_seq_lengths, circular=bg_circular)
-        curr_bg_fname_to_positions = utility.create_pool(bg_seq_initialized_f, tasks)
+        curr_bg_fname_to_positions = src.utility.create_pool(bg_seq_initialized_f, tasks, cpus=src.parameter.cpus)
 
         partial_initialized_f = partial(evaluate_wrapper, fg_seq_lengths=fg_seq_lengths,
                                         bg_seq_lengths=bg_seq_lengths)
-        curr_scores = utility.create_pool(partial_initialized_f, zip(curr_fg_fname_to_positions, curr_bg_fname_to_positions))
+        curr_scores = src.utility.create_pool(partial_initialized_f, list(zip(curr_fg_fname_to_positions, curr_bg_fname_to_positions)), cpus=src.parameter.cpus)
 
         for i, primer_set_sub in enumerate(tasks):
             compressed_primer_string = get_compressed_string(primer_set_sub)
             cache[compressed_primer_string] = curr_scores[i]
 
     top_sets = [[] for i in range(max_sets)]
-    top_scores = [0 for i in range(max_sets)]
+    top_scores = [float("-inf") for i in range(max_sets)]
 
     for primer_set in primer_sets:
         for i, primer in enumerate(primer_set):
@@ -98,16 +96,11 @@ def drop_out_layer(primer_sets, cache, fg_prefixes=None, bg_prefixes=None, fg_se
 
     fg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=fg_prefixes,
                                    seq_lengths_fname=fg_seq_lengths, circular=fg_circular)
-    top_fg_fname_to_positions = utility.create_pool(fg_seq_initialized_f, top_sets)
+    top_fg_fname_to_positions = src.utility.create_pool(fg_seq_initialized_f, top_sets, cpus=src.parameter.cpus)
 
     bg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=bg_prefixes,
                                    seq_lengths_fname=bg_seq_lengths, circular=bg_circular)
-    top_bg_fname_to_positions = utility.create_pool(bg_seq_initialized_f, top_sets)
-
-    # print(top_sets)
-    # print(top_scores)
-    # print(tasks)
-    # print(cache)
+    top_bg_fname_to_positions = src.utility.create_pool(bg_seq_initialized_f, top_sets, cpus=src.parameter.cpus)
 
     return top_sets, top_scores, top_fg_fname_to_positions, top_bg_fname_to_positions, cache
 
@@ -180,7 +173,8 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
     finished_sets = []  # Keeps track of the best sets out of all iterations.
     finished_scores = []
 
-    print(banned_primers)
+    if src.parameter.verbose:
+        print("The banned primers: " + str(banned_primers))
 
     # choose the one with the maximum score
     for iter in range(1, iterations):
@@ -191,9 +185,10 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
         next_top_bg_fname_to_positions_all = []
         prev_top_set_index_all = []
 
-        print("Iter: " + str(iter))
-        print(top_sets)
-        print(top_scores)
+        print("Iteration #: " + str(iter))
+
+        if src.parameter.verbose:
+            print(top_scores)
 
         for i, top_set in enumerate(top_sets):
 
@@ -223,14 +218,12 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
             next_top_bg_fname_to_positions_all.extend(next_top_bg_fname_to_positions_sub)
             prev_top_set_index_all.extend([i for x in range(len(next_top_sets_sub))])
 
-        print("The next top sets: " + str(next_top_sets_all))
-    #
-        if sum(next_top_scores_all) == 0:
+        if max(next_top_scores_all) < min(top_scores) + 0.01:
             finished_sets.extend(top_sets)
             finished_scores.extend(top_scores)
 
-            print("FINAL:")
-            print(finished_sets)
+            print("Finished sets:")
+            print(', '.join(map(str, finished_sets)))
             print(finished_scores)
             print()
 
@@ -244,7 +237,7 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
             old_set = top_sets[prev_top_set_index_all[j]]
             new_set = next_top_sets_all[j]
             new_primer = set(new_set) - set(old_set)
-            print("From the " + str(prev_top_set_index_all[j]) + "th top set, added primer " + str(new_primer) + " to " + str(old_set))
+            print("From top set number " + str(prev_top_set_index_all[j]) + ", added primer " + ', '.join(map(str, new_primer)) + " to [" + ', '.join(map(str, old_set)) + ']')
 
         threshold = max(next_top_scores_all)
         for i, top_set in enumerate(top_sets):
@@ -266,10 +259,13 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
     finished_sets.extend(top_sets)
     finished_scores.extend(top_scores)
 
-    print("FINAL:")
-    print(finished_sets)
-    print(finished_scores)
-    print()
+    # if sum(finished_scores) < 0:
+    # finished_scores = [src.utility.sigmoid(x) for x in finished_scores]
+    # print(finished_scores)
+
+    print("Finished sets:")
+    for finished_set in finished_sets:
+        print('[' + ', '.join(map(str, finished_set))+']')
 
     return finished_sets, finished_scores, cache
 
@@ -285,7 +281,7 @@ def initialize_fname_to_positions_dict(fname_prefixes, seq_lengths):
 #Parallelizes evaluating adding all valid primers to a top set from the previous iteration.
 def parallel_set_search_one_iteration(tasks, top_set, top_fg_fname_to_positions, top_bg_fname_to_positions, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_seq_lengths, max_sets, normalize_metric='softmax', cache={}):
     seq_initialized_f = partial(evaluate_pairs_helper, curr_fg_fname_to_positions=top_fg_fname_to_positions, curr_bg_fname_to_positions = top_bg_fname_to_positions, fg_fname_prefixes=fg_fname_prefixes, bg_fname_prefixes=bg_fname_prefixes, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths)
-    results = src.utility.create_pool(seq_initialized_f, tasks)
+    results = src.utility.create_pool(seq_initialized_f, tasks, src.parameter.cpus)
 
     selection=make_selection([[task] + top_set for task in tasks], [score for score, temp_fg, temp_bg in results], min(max_sets, len(tasks)), normalize_metric)
 
@@ -321,7 +317,6 @@ def make_selection(all_sets, all_scores, max_sets, normalize_metric):
             selection=[]
     elif normalize_metric == 'normalized':
         probabilities =  scores/np.sum(scores)
-        print(probabilities)
         nonzero_count = np.count_nonzero(probabilities)
         if nonzero_count != 0:
             selection = np.random.choice(range(num_tasks), size=min(nonzero_count,max_sets), replace=False, p=probabilities)
@@ -599,7 +594,10 @@ def incorporate_positions_row(curr_fname_to_positions, fname_prefixes, primer):
 
 def evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_lengths=None, bg_seq_lengths=None, target_var='percent', return_X=False, fg_circular=True, bg_circular=False):
     fg_features = get_features_simplified(temp_fg_fname_to_positions, fg_seq_lengths, circular=fg_circular, target=True)
+
     bg_features = get_features_simplified(temp_bg_fname_to_positions, bg_seq_lengths, circular=bg_circular, target=False)
+
+    pd.set_option('display.max_columns', 500)
 
     if fg_features.empty or bg_features.empty:
         return [-np.inf], None
@@ -607,28 +605,33 @@ def evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_leng
     all_features = pd.concat([fg_features, bg_features], axis=1)
     all_features = all_features.reset_index(drop=True)
 
+    all_features['off_sum'] = all_features['off_sum'].replace(0, 0.0000000001)
+    all_features['on_within_mean_gap'] = all_features['on_within_mean_gap'].replace(0, 0.0000000001)
+
     all_features['ratio'] = all_features['on_sum']/all_features['off_sum']
     all_features['within_mean_gap_ratio'] = all_features['off_within_mean_gap'] / all_features['on_within_mean_gap']
     all_features['agnostic_mean_gap_ratio'] = all_features['on_agnostic_mean_gap'] / all_features['off_agnostic_mean_gap']
+
+    # print(all_features)
 
     X = all_features[['ratio', 'agnostic_mean_gap_ratio', 'on_gap_gini', 'off_gap_gini', 'within_mean_gap_ratio']]
     clf = pickle.load(open(os.path.join(src.parameter.src_dir, 'ratio_agnostic_mean_gap_ratio_all_ginis_within_mean_gap_ratio.p'),
         'rb'))
 
-    if return_X:
-        return clf.predict(X)[0], X
+    score = clf.predict(X)[0]
 
-    return clf.predict(X)[0]
+    if return_X:
+        return score, X
+
+    return score
 
 def evaluate_pairs_helper(tasks, curr_fg_fname_to_positions=None, curr_bg_fname_to_positions=None, fg_fname_prefixes=None, bg_fname_prefixes=None, fg_seq_lengths=None, bg_seq_lengths=None, target_var=None):
     new_primer = tasks
-    # print("Primer: " + new_primer)
 
     temp_fg_fname_to_positions, _ = incorporate_positions_row(curr_fg_fname_to_positions, fg_fname_prefixes, new_primer)
     temp_bg_fname_to_positions, _ = incorporate_positions_row(curr_bg_fname_to_positions, bg_fname_prefixes, new_primer)
 
     score = evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths, target_var=target_var)
-    # print(score)
     return score, temp_fg_fname_to_positions, temp_bg_fname_to_positions
 
 def build_fname_to_positions(primer_set, fname_prefixes=None, seq_lengths_fname=None, circular=True):
@@ -640,51 +643,24 @@ def build_fname_to_positions(primer_set, fname_prefixes=None, seq_lengths_fname=
 def evaluate_wrapper(fname_to_positions, fg_seq_lengths=None, bg_seq_lengths=None, target_var='coverage'):
     return evaluate(fname_to_positions[0], fname_to_positions[1], fg_seq_lengths=fg_seq_lengths,bg_seq_lengths=bg_seq_lengths, target_var=target_var)
 
-def stand_alone_score_primer_sets(primer_sets, fg_prefixes=None, bg_prefixes=None, fg_seq_lengths=None, bg_seq_lengths=None, fg_circular=True, bg_circular=False):
+def stand_alone_score_primer_sets(primer_sets, fg_prefixes, bg_prefixes, fg_seq_lengths, bg_seq_lengths, fg_circular=True, bg_circular=False):
     human_chr_list = ['chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12',
                       'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrM',
                       'chrX', 'chrY']
-    if fg_prefixes is None:
-        fg_prefixes = [src.parameter.data_dir + 'kmer_files/myco']
-    if bg_prefixes is None:
-        bg_prefixes = [src.parameter.data_dir + 'kmer_files/human_' + chr for chr in human_chr_list]
-    if fg_seq_lengths is None:
-        fg_seq_lengths = [4411532]
-    if bg_seq_lengths is None:
-        bg_seq_lengths = [src.parameter.seq_len['human_' + chr] for chr in human_chr_list]
 
     fg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=fg_prefixes,
                                    seq_lengths_fname=fg_seq_lengths, circular=fg_circular)
-    initial_fg_fname_to_positions = src.utility.create_pool(fg_seq_initialized_f, primer_sets)
+    initial_fg_fname_to_positions = src.utility.create_pool(fg_seq_initialized_f, primer_sets, cpus=src.parameter.cpus)
 
     bg_seq_initialized_f = partial(build_fname_to_positions, fname_prefixes=bg_prefixes,
                                    seq_lengths_fname=bg_seq_lengths, circular=bg_circular)
-    initial_bg_fname_to_positions = src.utility.create_pool(bg_seq_initialized_f, primer_sets)
+    initial_bg_fname_to_positions = src.utility.create_pool(bg_seq_initialized_f, primer_sets, cpus=src.parameter.cpus)
 
     partial_initialized_f = partial(evaluate_wrapper, fg_seq_lengths=fg_seq_lengths,
                                     bg_seq_lengths=bg_seq_lengths)
     top_scores = src.utility.create_pool(partial_initialized_f,
-                                     zip(initial_fg_fname_to_positions, initial_bg_fname_to_positions))
+                                     list(zip(initial_fg_fname_to_positions, initial_bg_fname_to_positions)), cpus=src.parameter.cpus)
     print(primer_sets)
     print(top_scores)
     return top_scores
-
-
-if __name__ == "__main__":
-    print("optimize.py")
-    pd.set_option('display.max_columns', 500)
-    pd.set_option('display.max_row', 500)
-
-    human_chr_list = ['chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12',
-                      'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrM',
-                      'chrX', 'chrY']
-    myco_prefixes = [src.parameter.data_dir + 'kmer_files/myco']
-    human_prefixes = [src.parameter.data_dir + 'kmer_files/human_' + chr for chr in human_chr_list]
-    human_genomes = [src.parameter.data_dir + 'genomes/' + chr + '.fa' for chr in human_chr_list]
-    myco_genomes = [src.parameter.data_dir + 'genomes/MTBH37RV.fasta']
-
-    myco_seq_lengths = [4411532]
-    human_seq_lengths = [src.parameter.seq_len['human_' + chr] for chr in human_chr_list]
-
-
 

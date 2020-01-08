@@ -52,6 +52,8 @@ def write_args_to_json(args, out_fname=None):
     global fg_circular
     global bg_circular
     global drop_iterations
+    global verbose
+    global top_set_count
 
     data = {}
 
@@ -60,25 +62,32 @@ def write_args_to_json(args, out_fname=None):
 
     if args.json_file is not None:
         data['json_file'] = args.json_file
-        if not os.path.exists(os.path.dirname(data['json_file'])):
-            os.makedirs(os.path.dirname(data['json_file']))
+        if not os.path.exists(os.path.dirname(data['json_file'])) or not os.path.isfile(data['json_file']):
+            if not os.path.exists(os.path.dirname(data['json_file'])):
+                os.makedirs(os.path.dirname(data['json_file']))
+            if not os.path.isfile(data['json_file']):
+                open(data['json_file'], 'w+').close()
+        else:
+            data_extra = read_args_from_json(args.json_file)
 
-        data_extra = read_args_from_json(args.json_file)
-
-        for k, v in data_extra.items():
-            if k not in data:
-                data[k] = v
+            for k, v in data_extra.items():
+                if k not in data:
+                    data[k] = v
 
     min_fg_freq = data['min_fg_freq'] = args.min_fg_freq
     max_bg_freq = data['max_bg_freq'] = args.max_bg_freq
     min_tm = data['min_tm'] = args.min_tm
-    max_tm = data['max_tm'] = args.min_tm
+    max_tm = data['max_tm'] = args.max_tm
     max_gini = data['max_gini'] = args.max_gini
     max_primer = data['max_primer'] = args.max_primer
     min_amp_pred = data['min_amp_pred'] = args.min_amp_pred
     cpus = data['cpus'] = args.cpus
     max_dimer_bp = data['max_dimer_bp'] = args.max_dimer_bp
     max_self_dimer_bp = data['max_self_dimer_bp'] = args.max_self_dimer_bp
+    verbose = data['verbose'] = args.verbose
+    drop_iterations = data['drop_iterations'] = args.drop_iterations
+    iterations = data['iterations'] = args.iterations
+    top_set_count = data['top_set_count'] = args.top_set_count
     # mismatch_penalty = data['mismatch_penalty'] = args.mismatch_penalty
 
     if args.fasta_fore is not None:
@@ -99,7 +108,6 @@ def write_args_to_json(args, out_fname=None):
         else:
             data['bg_prefixes'] = [args.kmer_back]
 
-    print(data)
 
     if 'fg_seq_lengths' not in data or len(data['fg_seq_lengths']) != len(data['fg_genomes']):
         data['fg_seq_lengths'] = src.utility.get_all_seq_lengths(fname_genomes=data['fg_genomes'], cpus=data['cpus'])
@@ -112,7 +120,7 @@ def write_args_to_json(args, out_fname=None):
     return data
 
 def read_args_from_json(in_fname):
-    with open(in_fname) as json_file:
+    with open(in_fname, 'r') as json_file:
         data = json.load(json_file)
     return data
 

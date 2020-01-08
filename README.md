@@ -51,12 +51,12 @@ The primary step in the program identifies the k-mers of length 6 to 12 in the t
 
 The k-mer files for the target and off-target gnomes will be output to a file with a path prefix determined by command line parameters `-k` or `--kmer-fore` and `-j` or `--kmer-back`, respectively. 
 
-For example, if you have a ready json_file (see example/params.json) you can run 
+For example, if you have a ready json_file (see ../examples/plasmid_example/params.json) you can run 
 
 ```bash
-$ step1 -j example.json
+$ step1 -j ../examples/plasmid_example/params.json
 ```
-and for each prefix in `fg_prefixes` and `bg_prefixes`, a file with suffixes `_Xmer_all.txt` for X = 6 to 12 containing all k-mers of length X. The program will use the fasta file in `fg_genomes` or `bg_genomes` at the corresponding index. Thus, `fg_prefixes` should have the same length as `fg_genomes` and the same for `bg_prefixes` and `bg_genomes`. It they do not have the same length, the name of the fasta file will be used as the file prefix but at the path specified by `fg_prefixes` or `bg_prefixes` if it exists.
+and for each prefix in `fg_prefixes` and `bg_prefixes` of the json file, a file with suffixes `_Xmer_all.txt` for X = 6 to 12 containing all k-mers of length X. The program will use the fasta file in `fg_genomes` or `bg_genomes` at the corresponding index. Thus, `fg_prefixes` should have the same length as `fg_genomes` and the same for `bg_prefixes` and `bg_genomes`. If they do not have the same length, the name of the fasta file will be used as the file prefix but at the path specified by `fg_prefixes` or `bg_prefixes` if it exists.
 
 Alternatively, if there is no pre-existing json file, the k-mer files for the target and off-target gnomes will be output to a file with a path prefix determined by command line parameters `-k` or `--kmer-fore` and `-j` or `--kmer-back`, respectively. 
 
@@ -65,15 +65,15 @@ The genome files will be read from the `fg_genomes` and `bg_genomes` entries in 
 Example:
 
 ```bash
-$ step1 -j ../example/params.json
+$ step1 -j ../examples/plasmid_example/params.json
 ```
 or if a json file does not exist/you want to overwrite parameters in the json:
 
 ```bash
-$ step1 --kmer_fore ../example/kmer_files/myco --kmer_back ../example/kmer_files/human
- --fasta_fore ../example/genomes/MTBH37RV --fasta_back ../example/genomes/chr --json_file  ../example/params.json --data_dir ../example/
+$ step1 --kmer_fore ../examples/plasmid_example/kmer_files/myco --kmer_back ../examples/plasmid_example/kmer_files/human
+ --fasta_fore ../examples/plasmid_example/genomes/MTBH37RV --fasta_back ../examples/plasmid_example/genomes/chr --json_file  ../examples/plasmid_example/params.json --data_dir ../examples/plasmid_example/
 ```
-This would produce the given `.txt` files in `example/kmer_files/` and it would use all the fasta files with the path prefix `../example/genomes/MTBH37RV` and `../example/genomes/chr`.
+This would produce the given `.txt` files in `examples/plasmid_example/kmer_files/` and it would use all the fasta files with the path prefix `../examples/plasmid_example/genomes/MTBH37RV` and `../examples/plasmid_example/genomes/chr`.
 
 #### Step 1 relevant parameters
 
@@ -100,7 +100,7 @@ A h5py files are then created for storing primers and their respective locations
 Example:
 
 ```bash
-$ step2 -j ../example/params.json
+$ step2 -j ../examples/plasmid_example/params.json
 ```
 
 #### Step 2 relevant parameters
@@ -111,13 +111,13 @@ $ step2 -j ../example/params.json
 | -l | --kmer_back | None | path prefix for the kmer files of the off-target genomes |
 | -x | --fasta_fore | None | path or path prefix to the fasta files of the on-target genomes | 
 | -y | --fasta_back | None | path or path prefix to the fasta files of the off-target genomes |
-| -u | --min_fg_freq | 1e-5 | minimum normalized frequency of occurrences of the candidate primer in the foreground genomes |
-| -v | --max_bg_freq | 5e-5 | maximum normalized frequency of occurrences of the candidate primer in the background genomes |
+| -p | --min_fg_freq | 1e-5 | minimum normalized frequency of occurrences of the candidate primer in the foreground genomes |
+| -q | --max_bg_freq | 5e-5 | maximum normalized frequency of occurrences of the candidate primer in the background genomes |
 | -g | --max_gini | 0.6 | maximum Gini index of gap distances |
-| -p | --max_primer | 500 | maximum number of primers to select in step 2 | 
+| -e | --max_primer | 500 | maximum number of primers to select in step 2 | 
 | -m | --min_tm | 15 | minimum predicted melting temperature |
 | -n | --max_tm | 45 | maximum predicted melting temperature |
-| -q | --max_self_dimer_bp | 4 | maximum number of self-complementary base pairs |
+| -u | --max_self_dimer_bp | 4 | maximum number of self-complementary base pairs |
 | -c | --cpus | all cpus | number of cpus to use for multi-processed tasks |
 | -z | --data_dir | soapswga/project/ | the project directory where metadata files will be stored |
 
@@ -132,7 +132,7 @@ In this step, before we optimize over the combinatorial space of primer sets, we
 Example:
 
 ```bash
-$ step3 -j ../example/params.json
+$ step3 -j ../examples/plasmid_example/params.json
 ```
 or if a json file does not exist/you want to overwrite parameters in the json:
 
@@ -153,7 +153,7 @@ Using the filtered list of primers from the previous step, SOAPswga searches for
 
 
 ```bash
-$ step4 -j ../example/params.json
+$ step4 -j ../examples/plasmid_example/params.json
 ```
 
 <!-- ```bash
@@ -164,13 +164,15 @@ $ step4 --max-sets 5 --drop_iterations [4]
 | Short option | Long option | Default value | Description |
 | ------------- | ------------- | ------------- | ------------- |
 | -j | --json_file | None | path of json file, either existing or to be written |
-| -r | --max_dimer_bp | 4 | maximum number of complementary base pairs |
-| -s | --selection_method | 'deterministic' | selection method for choosing the next top primer sets |
+| -t | --max_dimer_bp | 4 | maximum number of complementary base pairs |
+| -s | --selection_method | 'deterministic' | selection method for choosing the next top primer sets {deterministic, softmax, normalize} |
 | -d | --drop_iterations | [5] | the iterations which will have drop out |
-| -i | --iterations | 10 | number of iterations to run the primer set search; the maximum length of the resulting primer sets will be the number of iterations minus the number of drop iterations |
-| -h | --max_sets | 5 | maximum number of sets to build in parallel |
+| -i | --iterations | 8 | number of iterations to run the primer set search; the maximum length of the resulting primer sets will be the number of iterations minus the number of drop iterations |
+| -r | --retries | 5 | number of retries of the search algorithm |
+| -w | --max_sets | 5 | maximum number of sets to build in parallel |
 | -c | --cpus | all cpus | number of cpus to use for multi-processed tasks |
 | -z | --data_dir | soapswga/project/ | the project directory where metadata files will be stored |
+| -# | --top_sets_count | 10 | the number of top sets to output |
 
 ## All parameters
 | Short option | Long option | Default value | Description |
@@ -182,16 +184,19 @@ $ step4 --max-sets 5 --drop_iterations [4]
 | -y | --fasta_back | None | path or path prefix to the fasta files of the off-target genomes |
 | -c | --cpus | all cpus | number of cpus to use for multi-processed tasks |
 | -z | --data_dir | soapswga/project/ | the project directory where metadata files will be stored |
-| -u | --min_fg_freq | 1e-5 | minimum normalized frequency of occurrences of the candidate primer in the foreground genomes |
-| -v | --max_bg_freq | 5e-5 | maximum normalized frequency of occurrences of the candidate primer in the background genomes |
+| -p | --min_fg_freq | 1e-5 | minimum normalized frequency of occurrences of the candidate primer in the foreground genomes |
+| -q | --max_bg_freq | 5e-5 | maximum normalized frequency of occurrences of the candidate primer in the background genomes |
 | -g | --max_gini | 0.6 | maximum Gini index of gap distances |
-| -p | --max_primer | 500 | maximum number of primers to select in step 2 |
+| -e | --max_primer | 500 | maximum number of primers to select in step 2 |
 | -m | --min_tm | 15 | minimum predicted melting temperature |
 | -n | --max_tm | 45 | maximum predicted melting temperature |
-| -q | --max_self_dimer_bp | 4 | maximum number of self-complementary base pairs |
+| -u | --max_self_dimer_bp | 4 | maximum number of self-complementary base pairs |
 | -a | --min_amp_pred | 5 | minimum amplification score from random forest regressor |
-| -r | --max_dimer_bp | 4 | maximum number of complementary base pairs |
+| -t | --max_dimer_bp | 4 | maximum number of complementary base pairs |
 | -s | --selection_method | 'deterministic' | selection method for choosing the next top primer sets |
 | -d | --drop_iterations | [5] | the iterations which will have drop out |
-| -i | --iterations | 10 | number of iterations to run the primer set search; the maximum length of the resulting primer sets will be the number of iterations minus the number of drop iterations |
-| -h | --max_sets | 5 | maximum number of sets to build in parallel |
+| -i | --iterations | 8 | number of iterations to run the primer set search; the maximum length of the resulting primer sets will be the number of iterations minus the number of drop iterations |
+| -r | --retries | 5 | number of retries of the search algorithm |
+| -w | --max_sets | 5 | maximum number of sets to build in parallel |
+| -s | --selection_method | 'deterministic' | selection method for choosing the next top primer sets {deterministic, softmax, normalize} |
+| -# | --top_sets_count | 10 | the number of top sets to output |

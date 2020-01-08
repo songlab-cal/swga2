@@ -120,10 +120,10 @@ def get_all_rates(primer_list, fg_prefixes, bg_prefixes, fg_total_length, bg_tot
 
     for primer in primer_list:
         fg_count = primer_to_fg_count[primer]
-        fg_bool = (fg_count is None or fg_count/fg_total_length > parameter.min_fg_freq)
+        fg_bool = (fg_count is None or fg_count/fg_total_length > src.parameter.min_fg_freq)
 
         bg_count = primer_to_bg_count[primer]
-        bg_bool = (bg_count is None or bg_count/bg_total_length < parameter.max_bg_freq)
+        bg_bool = (bg_count is None or bg_count/bg_total_length < src.parameter.max_bg_freq)
         results.append([primer, fg_count, bg_count, fg_bool, bg_bool])
 
     df = pd.DataFrame(results, columns=['primer', 'fg_count', 'bg_count', 'fg_bool', 'bg_bool'])
@@ -180,8 +180,7 @@ def get_rate_for_one_file(task):
 def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df=None, input_df_fname=src.parameter.data_dir + 'primer_candidate_list_myco_human.p'):
     if df is None:
         df = pickle.load(open(input_df_fname, 'rb'))
-    df['gini'] = primer_attributes.get_gini_from_txt(df['primer'].values, fg_prefixes, fg_genomes, fg_seq_lengths)
-    print(df['gini'])
+    df['gini'] = src.primer_attributes.get_gini_from_txt(df['primer'].values, fg_prefixes, fg_genomes, fg_seq_lengths)
 
     if len(df['gini']) == 0:
         df['gini_bool'] = []
@@ -190,25 +189,3 @@ def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df=None, input_df_fname=sr
     df['gini_bool'] = df.apply(lambda x: x['gini'] is not None and x['gini'] < src.parameter.max_gini, axis=1)
 
     return df
-
-if __name__ == "__main__":
-    human_chr_list = ['chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11',
-                      'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrM',
-                      'chrX', 'chrY']
-    primer_list = ['AACGATGAC', 'AAGAACGAC', 'AAGATGTCG', 'AATGACGAC']
-
-    myco_seq_lengths = [4411532]
-    human_seq_lengths = [parameter.seq_len['human_' + chr] for chr in human_chr_list]
-    myco_prefixes = [parameter.data_dir + 'kmer_files/myco']
-    human_prefixes = [parameter.data_dir + 'kmer_files/human_' + chr for chr in human_chr_list]
-    human_genomes = [parameter.data_dir + 'genomes/' + chr + '.fa' for chr in human_chr_list]
-    myco_genomes = [parameter.data_dir + 'genomes/MTBH37RV.fasta']
-
-    primer_to_fg_count = get_rates_for_one_species(['CTAGGTAGTAG'], myco_prefixes)
-    primer_to_bg_count = get_rates_for_one_species(['CTAGGTAGTAG'], human_prefixes)
-    print(primer_to_fg_count)
-    print(primer_to_bg_count)
-
-    print(get_all_rates(['CTAGGTAGTAG'], myco_prefixes, human_prefixes, sum(myco_seq_lengths), sum(human_seq_lengths)))
-
-    print(filter_extra('TTCGTACCG', verbose=True))

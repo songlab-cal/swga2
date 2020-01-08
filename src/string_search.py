@@ -17,7 +17,7 @@ def get_all_positions_per_k(kmer_list, seq_fname=None, fname_prefix=None):
     current_text = ''.join([next(seq) for _ in range(k)])
 
     if fname_prefix is not None:
-        print("Starting the search for " + fname_prefix + ' ' + str(k) + 'mers')
+        print("Starting the search for " + fname_prefix + ' ' + str(k) + 'mers...')
 
     i = 0
     for c in seq:

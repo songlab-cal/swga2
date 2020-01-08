@@ -35,5 +35,4 @@ def get_primer_list_from_kmers(prefixes, kmer_lengths=None):
                     tm = melting.temp(curr_kmer)
                     if tm < src.parameter.max_tm and tm > src.parameter.min_tm:
                         primer_list.append(curr_kmer)
-
     return primer_list

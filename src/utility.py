@@ -6,6 +6,7 @@ from openpyxl import load_workbook
 import pandas as pd
 from collections import Counter
 import random
+import math
 
 cpus = int(multiprocessing.cpu_count())
 min_fg_freq=float(1/100000)
@@ -29,6 +30,7 @@ def create_pool(func, input_list, cpus):
         func (func): Function to apply to each value in the input list.
         input_list (list): List of values to which func will be applied.
         cpus (int): The number of processes to use.
+
     Returns:
         results: List of the results of function applied to the inputlist.
     """
@@ -50,6 +52,15 @@ def flatten(l):
     return [item for sublist in l for item in sublist]
 
 def mergeArrays(arr1, arr2):
+    """Merges two sorted arrays, maintaining sorted order.
+
+        Args:
+            arr1: First array in sorted order.
+            arr2: Second array in sorted order.
+
+        Returns:
+            arr3: The merged array in sorted order.
+    """
     n1 = len(arr1)
     n2 = len(arr2)
 
@@ -73,19 +84,35 @@ def mergeArrays(arr1, arr2):
         arr3.append(arr1[i]);
         i = i + 1
 
-    # Store remaining elementsof second array
+    # Store remaining elements of second array
     while j < n2:
         arr3.append(arr2[j]);
         j = j + 1
     return arr3
 
 def softmax(x):
-    """Compute softmax values for each sets of scores in x."""
+    """Compute softmax values for each sets of scores in x.
+
+        Args:
+            x: Input value for softmax.
+
+        Returns:
+            s: Value of softmax function of x.
+    """
     e_x = np.exp(x)
     return e_x / e_x.sum()
 
-def output_to_df(df, sheet_name, xls_path):
+def sigmoid(x):
+  return 1 / (1 + math.exp(-x))
 
+def output_to_df(df, sheet_name, xls_path):
+    """Output a pandas dataframe to a excel spreadsheet.
+
+        Args:
+            df: The pandas dataframe to be written to the spreadsheet.
+            sheet_name: The sheet name of the excel file.
+            xls_path: The path to the excel file.
+    """
     book = load_workbook(xls_path)
 
     if sheet_name in book.sheetnames:
@@ -100,22 +127,31 @@ def output_to_df(df, sheet_name, xls_path):
     df.to_excel(writer, sheet_name=sheet_name)
     writer.save()
 
-
-
 def get_seq_length(genome):
+    """
+    Computes the sequence length of a genome in one fasta file.
+
+    Args:
+        genome: Fasta file of the genome.
+
+    Returns:
+        l: Total length of characters in the fasta file.
+    """
     return sum(1 for _ in read_fasta_file(genome))
 
-def get_all_seq_lengths(fname_genomes=None, seq_lengths=None, cpus=8):
-    if isinstance(seq_lengths, str) and os.path.exists(seq_lengths):
-        seq_lengths = pickle.load(open(seq_lengths, 'rb'))
+def get_all_seq_lengths(fname_genomes=None, cpus=8):
+    """
+    Computes the sequence length of multiple genomes.
 
-    if isinstance(seq_lengths, list):
-        return seq_lengths
-    else:
-        if seq_lengths:
-            print("seq_lengths is of type " + str(type(seq_lengths)) + ". Need list.")
-        seq_lengths = create_pool(get_seq_length, fname_genomes, cpus)
-        return seq_lengths
+    Args:
+        fname_genomes: Fasta file of the genome.
+        cpus: Number of cpus to be used.
+
+    Returns:
+        l: List of lengths of the individual genomes in all the fasta files.
+    """
+    seq_lengths = create_pool(get_seq_length, fname_genomes, cpus)
+    return seq_lengths
 
 def longest_char_repeat(s, char):
     max_count = 0
