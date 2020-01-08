@@ -237,7 +237,9 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
             old_set = top_sets[prev_top_set_index_all[j]]
             new_set = next_top_sets_all[j]
             new_primer = set(new_set) - set(old_set)
-            print("From top set number " + str(prev_top_set_index_all[j]) + ", added primer " + ', '.join(map(str, new_primer)) + " to [" + ', '.join(map(str, old_set)) + ']')
+
+            if len(new_primer) == 1:
+                print("From top set number " + str(prev_top_set_index_all[j]) + ", added primer " + ', '.join(map(str, new_primer)) + " to [" + ', '.join(map(str, old_set)) + ']')
 
         threshold = max(next_top_scores_all)
         for i, top_set in enumerate(top_sets):
@@ -264,7 +266,8 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
 
     print("Finished sets:")
     for finished_set in finished_sets:
-        print('[' + ', '.join(map(str, finished_set))+']')
+        if len(finished_set) > 0:
+            print('[' + ', '.join(map(str, finished_set))+']')
 
     return finished_sets, finished_scores, cache
 

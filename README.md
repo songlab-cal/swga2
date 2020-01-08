@@ -33,7 +33,7 @@ Install dependencies in the virtual environment using
 $ pip install -r requirements.txt
 ```
 
-To install `soapswga`, go into the downloaded folder and enter
+To install `soapswga`, first download the repository and go into the downloaded folder. Run the following: 
 
  ```bash
 $ pip install .
