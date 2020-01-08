@@ -33,10 +33,10 @@ Install dependencies in the virtual environment using
 $ pip install -r requirements.txt
 ```
 
-To install `soapswga`
+To install `soapswga`, go into the downloaded folder and enter
 
  ```bash
-$ pip install soapswga
+$ pip install .
 ```
 
 You'll also need `jellyfish`, which is available at https://www.cbcb.umd.edu/software/jellyfish/ and will needed to be added to your PATH.
