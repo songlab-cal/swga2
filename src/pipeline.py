@@ -209,6 +209,9 @@ def step4(primer_list=None, scores = None, target_var='coverage', selection_metr
     final_sets = list(np.array(results)[idx.astype(int)])
     final_scores = list(np.array(scores)[idx.astype(int)])
 
+    # final_sets = final_sets[:src.parameter.top_set_count]
+    # final_scores = final_scores[:src.parameter.top_set_count]
+
     min_score = min(final_scores)
 
     if min_score < 0:
@@ -216,12 +219,9 @@ def step4(primer_list=None, scores = None, target_var='coverage', selection_metr
     elif min_score > 100:
         final_scores = [score - abs(min_score) for score in final_scores]
 
-    print(final_sets)
-    print(final_scores)
-
     print("FINAL TOP:" + str(src.parameter.top_set_count))
     for i, final_set in enumerate(final_sets[:src.parameter.top_set_count]):
-        print('[' + ', '.join(map(str, final_set)) + '], ' + str(final_scores[i]))
+        print('[' + ', '.join(map(str, final_set)) + '], ' + str(round(final_scores[i], 2)))
 
 def step5(primer_sets):
 
@@ -236,7 +236,7 @@ def step5(primer_sets):
     for index in argsort_indices:
         can_add = True
         for selected_index in selection_indices:
-            num_intersect = len(src.src.utility.intersection(primer_sets[selected_index], primer_sets[index]))
+            num_intersect = len(src.utility.intersection(primer_sets[selected_index], primer_sets[index]))
             if num_intersect > 4:
                 can_add = False
         if can_add and index not in avoid_indices:

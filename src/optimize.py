@@ -241,8 +241,7 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
 
         threshold = max(next_top_scores_all)
         for i, top_set in enumerate(top_sets):
-            #CHANGE THIS BEFORE SHIPPING
-            if top_scores[i] > threshold or len(top_set) == 7:
+            if top_scores[i] > threshold:
                 finished_scores.append(top_scores[i])
                 finished_sets.append(top_set)
 
