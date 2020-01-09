@@ -166,7 +166,7 @@ def step4(primer_list=None, scores = None, target_var='coverage', selection_metr
     all_scores = []
     cache = {}
 
-    for i in range(src.parameter.iterations):
+    for i in range(src.parameter.retries):
         print("Repeat #: " + str(i+1))
 
         if initial_primer_sets is not None:
