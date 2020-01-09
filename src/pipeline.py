@@ -182,7 +182,7 @@ def step4(primer_list=None, scores = None, target_var='coverage', selection_metr
         combined_primer_list = list(set(primer_list+random_primers))
 
         print("Banned primers: " + str(banned_primers))
-        results, scores, cache = src.optimize.bfs(combined_primer_list, fg_prefixes, bg_prefixes, fg_seq_lengths, bg_seq_lengths, initial_primer_sets=initial_primer_sets, iterations=iterations, max_sets=max_sets, target_var=target_var, selection_method=selection_metric, banned_primers=banned_primers, fg_circular=fg_circular, bg_circular=bg_circular, cache=cache, drop_indices=src.parameter.drop_iterations)
+        results, scores, cache = src.optimize.bfs(combined_primer_list, fg_prefixes, bg_prefixes, fg_seq_lengths, bg_seq_lengths, initial_primer_sets=initial_primer_sets, iterations=src.parameter.iterations, max_sets=src.parameter.max_sets, target_var=target_var, selection_method=src.parameter.selection_metric, banned_primers=banned_primers, fg_circular=src.parameter.fg_circular, bg_circular=src.parameter.bg_circular, cache=cache, drop_indices=src.parameter.drop_iterations)
 
         all_results.append(results)
         all_scores.append(scores)

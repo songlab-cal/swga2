@@ -54,6 +54,8 @@ def write_args_to_json(args, out_fname=None):
     global drop_iterations
     global verbose
     global top_set_count
+    global retries
+
 
     data = {}
 
@@ -88,7 +90,11 @@ def write_args_to_json(args, out_fname=None):
     drop_iterations = data['drop_iterations'] = args.drop_iterations
     iterations = data['iterations'] = args.iterations
     top_set_count = data['top_set_count'] = args.top_set_count
-    # mismatch_penalty = data['mismatch_penalty'] = args.mismatch_penalty
+    retries = data['retries'] = args.retries
+    max_sets = data['max_sets'] = args.max_sets
+    selection_metric = data['selection_metric'] = args.selection_metric
+    fg_circular = data['fg_circular'] = args.fg_circular
+    bg_circular = data['bg_circular'] = args.bg_circular
 
     if args.fasta_fore is not None:
         data['fg_genomes'] = get_all_files(args.fasta_fore)
