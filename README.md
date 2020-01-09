@@ -51,7 +51,7 @@ The primary step in the program identifies the k-mers of length 6 to 12 in the t
 
 The k-mer files for the target and off-target gnomes will be output to a file with a path prefix determined by command line parameters `-k` or `--kmer-fore` and `-j` or `--kmer-back`, respectively. 
 
-For example, if you have a ready json_file (see ../examples/plasmid_example/params.json) you can run 
+For example, if you have a ready json file (see ../examples/plasmid_example/params.json) you can run 
 
 ```bash
 $ step1 -j ../examples/plasmid_example/params.json

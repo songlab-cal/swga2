@@ -17,7 +17,7 @@ parser.add_option('-p', '--min_fg_freq', default=float(1/100000), type=float, he
 parser.add_option('-q', '--max_bg_freq', default=float(1/200000), type=float, help='')
 parser.add_option('-g', '--max_gini', default=0.6, type=float, help='')
 parser.add_option('-e', '--max_primer', default=500, type=int, help='')
-parser.add_option('-a', '--min_amp_pred', default=5, type=float, help='')
+parser.add_option('-a', '--min_amp_pred', default=10, type=float, help='')
 parser.add_option('-m', '--min_tm', default=15, type=int, help='')
 parser.add_option('-n', '--max_tm', default=45, type=int, help='')
 parser.add_option('-t', '--max_dimer_bp', default=3, type=int, help='')
@@ -145,7 +145,7 @@ def step3(out_file_prefix=None):
     else:
         pickle.dump(joined_step3_df, open(os.path.join(src.parameter.data_dir, 'step3_df.p'), "wb"))
 
-    print("Filtered  " + str(step2_df.shape[0] - joined_step3_df.shape[0]) + " number of primers based on efficacy.")
+    print("Filtered " + str(step2_df.shape[0] - joined_step3_df.shape[0]) + " number of primers based on efficacy.")
 
     if src.parameter.verbose:
         print(joined_step3_df)

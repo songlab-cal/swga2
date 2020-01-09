@@ -7,9 +7,9 @@
     "max_tm": 45,
     "max_gini": 0.6,
     "max_primer": 500,
-    "min_amp_pred": 5,
+    "min_amp_pred": 8,
     "cpus": 8,
-    "max_dimer_bp": 2,
+    "max_dimer_bp": 3,
     "max_self_dimer_bp": 4,
     "fg_genomes": [
         "/Users/janeyu/Documents/soapswga/examples/plasmid_example/pcDNA.fasta"
