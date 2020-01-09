@@ -219,7 +219,7 @@ def step4(primer_list=None, scores = None, target_var='coverage', selection_metr
     elif min_score > 100:
         final_scores = [score - abs(min_score) for score in final_scores]
 
-    print("FINAL TOP:" + str(src.parameter.top_set_count))
+    print("FINAL TOP: " + str(src.parameter.top_set_count))
     for i, final_set in enumerate(final_sets[:src.parameter.top_set_count]):
         print('[' + ', '.join(map(str, final_set)) + '], ' + str(round(final_scores[i], 2)))
 
