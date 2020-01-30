@@ -5,6 +5,10 @@ import src.parameter
 import src.utility
 import multiprocessing
 
+import sys
+import pandas.core.indexes
+sys.modules['pandas.indexes'] = pandas.core.indexes
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     warnings.filterwarnings("ignore", category=DeprecationWarning)
