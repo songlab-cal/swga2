@@ -22,16 +22,13 @@ def get_all_files(prefix_or_file):
     # print(total_files)
     return total_files
 
-def get_value_or_default(arg_value, data, key, default):
-    # print(arg_value)
-    # print(data)
-    # print(key)
-    # print(default)
+def get_value_or_default(arg_value, data, key):
     if arg_value is not None:
         return arg_value
-    if not key in data:
-        return default
-    return data[key]
+    if key in data:
+        return data[key]
+    else:
+        print("Please input values for " + str(key) + ".")
 
 def write_args_to_json(args, out_fname=None):
     global min_fg_freq
@@ -55,11 +52,11 @@ def write_args_to_json(args, out_fname=None):
     global verbose
     global top_set_count
     global retries
+    global src_dir
 
 
     data = {}
 
-    data_dir = data['data_dir'] = args.data_dir
     # data['json_file'] = get_value_or_default(args.json_file, data, 'json_file', os.path.join(data['data_dir'], 'params')) if out_fname is None else out_fname
 
     if args.json_file is not None:
@@ -76,25 +73,32 @@ def write_args_to_json(args, out_fname=None):
                 if k not in data:
                     data[k] = v
 
-    min_fg_freq = data['min_fg_freq'] = args.min_fg_freq
-    max_bg_freq = data['max_bg_freq'] = args.max_bg_freq
-    min_tm = data['min_tm'] = args.min_tm
-    max_tm = data['max_tm'] = args.max_tm
-    max_gini = data['max_gini'] = args.max_gini
-    max_primer = data['max_primer'] = args.max_primer
-    min_amp_pred = data['min_amp_pred'] = args.min_amp_pred
-    cpus = data['cpus'] = args.cpus
-    max_dimer_bp = data['max_dimer_bp'] = args.max_dimer_bp
-    max_self_dimer_bp = data['max_self_dimer_bp'] = args.max_self_dimer_bp
-    verbose = data['verbose'] = args.verbose
-    drop_iterations = data['drop_iterations'] = args.drop_iterations
-    iterations = data['iterations'] = args.iterations
-    top_set_count = data['top_set_count'] = args.top_set_count
-    retries = data['retries'] = args.retries
-    max_sets = data['max_sets'] = args.max_sets
-    selection_metric = data['selection_metric'] = args.selection_metric
-    fg_circular = data['fg_circular'] = args.fg_circular
-    bg_circular = data['bg_circular'] = args.bg_circular
+    data_dir = data['data_dir'] = get_value_or_default(args.data_dir, data, 'data_dir')
+    src_dir = data['src_dir'] = get_value_or_default(args.src_dir, data, 'src_dir')
+    min_fg_freq = data['min_fg_freq'] = get_value_or_default(args.min_fg_freq, data, 'min_fg_freq')
+    max_bg_freq = data['max_bg_freq'] = get_value_or_default(args.max_bg_freq, data, 'max_bg_freq')
+
+    min_tm = data['min_tm'] = get_value_or_default(args.min_tm, data, 'min_tm')
+    max_tm = data['max_tm'] = get_value_or_default(args.max_tm, data, 'max_tm')
+
+
+
+    max_gini = data['max_gini'] = get_value_or_default(args.max_gini, data, 'max_gini')
+    max_primer = data['max_primer'] = get_value_or_default(args.max_primer, data, 'max_primer')
+    min_amp_pred = data['min_amp_pred'] = get_value_or_default(args.min_amp_pred, data, 'min_amp_pred')
+    cpus = data['cpus'] = get_value_or_default(args.cpus, data, 'cpus')
+    max_dimer_bp = data['max_dimer_bp'] = get_value_or_default(args.max_dimer_bp, data, 'max_dimer_bp')
+    max_self_dimer_bp = data['max_self_dimer_bp'] = get_value_or_default(args.max_self_dimer_bp, data, 'max_self_dimer_bp')
+    verbose = data['verbose'] = get_value_or_default(args.verbose, data, 'verbose')
+
+    drop_iterations = data['drop_iterations'] = get_value_or_default(args.drop_iterations, data, 'drop_iterations')
+    iterations = data['iterations'] = get_value_or_default(args.iterations, data, 'iterations')
+    top_set_count = data['top_set_count'] = get_value_or_default(args.top_set_count, data, 'top_set_count')
+    retries = data['retries'] = get_value_or_default(args.retries, data, 'retries')
+    max_sets = data['max_sets'] = get_value_or_default(args.max_sets, data, 'max_sets')
+    selection_metric = data['selection_metric'] = get_value_or_default(args.selection_metric, data, 'selection_metric')
+    fg_circular = data['fg_circular'] = get_value_or_default(args.fg_circular, data, 'fg_circular')
+    bg_circular = data['bg_circular'] = get_value_or_default(args.bg_circular, data, 'bg_circular')
 
     if args.fasta_fore is not None:
         data['fg_genomes'] = get_all_files(args.fasta_fore)

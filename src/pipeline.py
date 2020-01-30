@@ -1,10 +1,15 @@
+import warnings
 from optparse import OptionParser
+import argparse
 import src.parameter
 import src.utility
 import multiprocessing
-import os
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+    import h5py
 
 parser = OptionParser()
 parser.add_option('-k', '--kmer_fore', help='')
@@ -12,7 +17,8 @@ parser.add_option('-l', '--kmer_back', help='')
 parser.add_option('-x', '--fasta_fore', help='')
 parser.add_option('-y', '--fasta_back', help='')
 parser.add_option('-j', '--json-file', type=str, help='')
-parser.add_option('-z', '--data_dir', default=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data/project'), type=str, help='')
+parser.add_option('-z', '--data_dir', type=str, help='')
+parser.add_option('-!', '--src_dir', type=str, help='')
 parser.add_option('-p', '--min_fg_freq', default=float(1/100000), type=float, help='')
 parser.add_option('-q', '--max_bg_freq', default=float(1/200000), type=float, help='')
 parser.add_option('-g', '--max_gini', default=0.6, type=float, help='')
@@ -60,6 +66,31 @@ bg_genomes = params['bg_genomes']
 fg_seq_lengths = params['fg_seq_lengths']
 bg_seq_lengths = params['bg_seq_lengths']
 
+def main():
+
+    arg_parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        add_help=False)
+
+    arg_parser.add_argument(
+        'command',
+        type=str,
+        choices=['step1', 'step2', 'step3', 'step4'])
+
+    args, remaining = arg_parser.parse_known_args()
+
+    if args.command == 'step1':
+        step1()
+    elif args.command == 'step2':
+        step2()
+    elif args.command == 'step3':
+        step3()
+    elif args.command == 'step4':
+        step4()
+    else:
+        print("Please input a command: step1, step2, step3, or step4.")
+
+
 def step1():
     """
         Creates files of all k-mers of length 6 to 12 which is located in the path specificed by --kmer_fore and --kmer_b .
@@ -98,7 +129,8 @@ def step2(all_primers=None):
     print("Computing foreground and background rates...")
     rate_df = src.filter.get_all_rates(all_primers, **kwargs)
     filtered_rate_df = rate_df[(rate_df['fg_bool']) & (rate_df['bg_bool'])]
-    filtered_rate_df = filtered_rate_df.drop(columns=['fg_bool', 'bg_bool'])
+    print(filtered_rate_df)
+    filtered_rate_df = filtered_rate_df.drop(['fg_bool', 'bg_bool'], axis=1)
     print("Filtered " + str(len(rate_df) - len(filtered_rate_df)) + " number of primers based on foreground/background rate.")
 
     if src.parameter.verbose:

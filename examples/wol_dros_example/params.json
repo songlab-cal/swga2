@@ -1,7 +1,7 @@
 {
-    "json_file": "/Users/janeyu/Documents/soapswga/examples/plasmid_example/params.json",
-    "data_dir": "/Users/janeyu/Documents/soapswga/examples/plasmid_example/",
+    "data_dir": "/Users/janeyu/Documents/soapswga/examples/wol_dros_example/",
     "src_dir": "/Users/janeyu/Documents/soapswga/src/",
+    "json_file": "/Users/janeyu/Documents/soapswga/examples/wol_dros_example/params.json",
     "min_fg_freq": 1e-05,
     "max_bg_freq": 5e-06,
     "min_tm": 15,
@@ -13,31 +13,31 @@
     "max_dimer_bp": 3,
     "max_self_dimer_bp": 4,
     "fg_genomes": [
-        "/Users/janeyu/Documents/soapswga/examples/plasmid_example/pcDNA.fasta"
+        "/Users/janeyu/Documents/soapswga/examples/wol_dros_example/wolbachia.fasta"
     ],
     "bg_genomes": [
-        "/Users/janeyu/Documents/soapswga/examples/plasmid_example/pLTR.fasta"
+        "/Users/janeyu/Documents/soapswga/examples/wol_dros_example/drosophila.fasta"
     ],
     "fg_prefixes": [
-        "/Users/janeyu/Documents/soapswga/examples/plasmid_example/kmer_files/pcDNA"
+        "/Users/janeyu/Documents/soapswga/examples/wol_dros_example/kmer_files/wolbachia"
     ],
     "bg_prefixes": [
-        "/Users/janeyu/Documents/soapswga/examples/plasmid_example/kmer_files/pLTR"
+        "/Users/janeyu/Documents/soapswga/examples/wol_dros_example/kmer_files/drosophila"
     ],
     "mismatch_penalty": 4,
     "verbose": false,
     "drop_iterations": [
         5
     ],
-    "iterations": 8,
+    "iterations": 2,
     "top_set_count": 10,
     "fg_seq_lengths": [
-        6157
+        1267782
     ],
     "bg_seq_lengths": [
-        6258
+        143858331
     ],
-    "retries": 5,
+    "retries": 1,
     "max_sets": 5,
     "selection_metric": "deterministic",
     "fg_circular": true,

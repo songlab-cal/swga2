@@ -111,7 +111,7 @@ def filter_extra(primer, verbose=False):
     return True
 
 #fg_rate and bg_rate should be the number of binding sites scaled by the genome length
-def get_all_rates(primer_list, fg_prefixes, bg_prefixes, fg_total_length, bg_total_length, output_df_fname=src.parameter.data_dir + 'primer_candidate_list_myco_human.p'):
+def get_all_rates(primer_list, fg_prefixes, bg_prefixes, fg_total_length, bg_total_length):
 
     primer_to_fg_count = get_rates_for_one_species(primer_list, fg_prefixes)
     primer_to_bg_count = get_rates_for_one_species(primer_list, bg_prefixes)
@@ -127,8 +127,8 @@ def get_all_rates(primer_list, fg_prefixes, bg_prefixes, fg_total_length, bg_tot
         results.append([primer, fg_count, bg_count, fg_bool, bg_bool])
 
     df = pd.DataFrame(results, columns=['primer', 'fg_count', 'bg_count', 'fg_bool', 'bg_bool'])
-    if output_df_fname:
-        pickle.dump(df, open(output_df_fname, 'wb'))
+    # if output_df_fname:
+    #     pickle.dump(df, open(output_df_fname, 'wb'))
     return df
 
 def get_rates_for_one_species(primer_list, fname_prefixes):

@@ -20,5 +20,5 @@ setuptools.setup(
     license='LICENSE.txt',
     description='Pipeline to select primer sets for selective whole-genome amplification.',
     long_description=open('README.md').read(),
-    entry_points={'console_scripts': ['step1 = src.pipeline:step1']}
+    entry_points={'console_scripts': ['soapswga = src.pipeline:main']}
 )
