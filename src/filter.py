@@ -7,12 +7,20 @@ import melting
 import multiprocessing
 import src.dimer
 
-def filter_extra(primer, verbose=False):
-    #1 Avoid using three G or C nucleotides in a row at the 3′-end of a primer.
-    #2 The GC content (the number of G's and C's in the primer as a percentage of the total bases) of primer should be 40-60%.
-    #3 The presence of G or C bases within the last five bases from the 3' end of primers (GC clamp) helps promote specific binding at the 3' end due to the stronger bonding of G and C bases. More than 3 G's or C's should be avoided in the last 5 bases at the 3' end of the primer.
-    #4 A repeat is a di-nucleotide occurring many times consecutively and should be avoided because they can misprime. For example: ATATATAT. A maximum number of di-nucleotide repeats acceptable in an oligo is 4 di-nucleotides.
-    #5 Primers with long runs of a single base should generally be avoided as they can misprime.For example, AGCGGGGGATGGGG has runs of base 'G' of value 5 and 4. A maximum number of runs accepted is 4bp.
+def filter_extra(primer):
+    """Filters a primer based on the following five rules:
+    1. Avoid using three G or C nucleotides in a row at the 3′-end of a primer.
+    2. The GC content (the number of G's and C's in the primer as a percentage of the total bases) of primer should be 40-60%.
+    3. The presence of G or C bases within the last five bases from the 3' end of primers (GC clamp) helps promote specific binding at the 3' end due to the stronger bonding of G and C bases. More than 3 G's or C's should be avoided in the last 5 bases at the 3' end of the primer.
+    4. A repeat is a di-nucleotide occurring many times consecutively and should be avoided because they can misprime. For example: ATATATAT. A maximum number of di-nucleotide repeats acceptable in an oligo is 4 di-nucleotides.
+    5. Primers with long runs of a single base should generally be avoided as they can misprime.For example, AGCGGGGGATGGGG has runs of base 'G' of value 5 and 4. A maximum number of runs accepted is 4bp.
+
+    Args:
+        primer: The primer to be evaluated, written in the 5' to 3' direction.
+
+    Returns:
+        filter_bool: True if it passes all filters; false otherwise.
+    """
 
     primer_tm = melting.temp(primer)
     # print(primer_tm)
@@ -34,7 +42,7 @@ def filter_extra(primer, verbose=False):
     if 'TTTTT' in primer:
         return False
 
-    if verbose:
+    if src.parameter.verbose:
         print("Checking the GC content")
 
     #Rule 2
@@ -48,7 +56,7 @@ def filter_extra(primer, verbose=False):
     if GC_content <= 0.375 or GC_content >= 0.625:
         return False
 
-    if verbose:
+    if src.parameter.verbose:
         print("Checking last five bases")
 
     #Rule 3
@@ -61,7 +69,7 @@ def filter_extra(primer, verbose=False):
     if last_five_count['G'] + last_five_count['C'] > 3 or last_five_count['G'] + last_five_count['C'] == 0:
         return False
 
-    if verbose:
+    if src.parameter.verbose:
         print("Checking last three bases")
 
     # Rule 1
@@ -74,7 +82,7 @@ def filter_extra(primer, verbose=False):
     if last_three_count['G'] + last_three_count['C'] == 3:
         return False
 
-    if verbose:
+    if src.parameter.verbose:
         print("Checking dinucleotide repeats")
 
     #Rule 4
@@ -104,14 +112,27 @@ def filter_extra(primer, verbose=False):
                     if 'CGCGCGCGCG' in primer or 'GCGCGCGCGC' in primer:
                         return False
 
-    if dimer.is_dimer(primer, primer, parameter.default_max_self_dimer_bp):
+    if src.dimer.is_dimer(primer, primer, src.parameter.default_max_self_dimer_bp):
         # print("here")
         return False
 
     return True
 
-#fg_rate and bg_rate should be the number of binding sites scaled by the genome length
+
 def get_all_rates(primer_list, fg_prefixes, bg_prefixes, fg_total_length, bg_total_length):
+    """
+    Computes the foreground and background binding site frequencies normalized by their respective genome lengths.
+
+    Args:
+        primer_list: The list of primers to compute frequencies for.
+        fg_prefixes: The list of foreground path prefixes used for creating the kmer files.
+        bg_prefixes: The list of background path prefixes used for creating the kmer files.
+        fg_total_length: The total number of base pairs in the foregound genome.
+        bg_total_length: The total number of base pairs in the background genome.
+
+    Returns:
+        df: A pandas dataframe with the sequence, unnormalized counts, and  columns fg_bool and bg_bool which indicate if the sequence passes the respective filters.
+    """
 
     primer_to_fg_count = get_rates_for_one_species(primer_list, fg_prefixes)
     primer_to_bg_count = get_rates_for_one_species(primer_list, bg_prefixes)
@@ -120,18 +141,28 @@ def get_all_rates(primer_list, fg_prefixes, bg_prefixes, fg_total_length, bg_tot
 
     for primer in primer_list:
         fg_count = primer_to_fg_count[primer]
-        fg_bool = (fg_count is None or fg_count/fg_total_length > src.parameter.min_fg_freq)
+    fg_bool = (fg_count is None or fg_count / fg_total_length > src.parameter.min_fg_freq)
 
-        bg_count = primer_to_bg_count[primer]
-        bg_bool = (bg_count is None or bg_count/bg_total_length < src.parameter.max_bg_freq)
-        results.append([primer, fg_count, bg_count, fg_bool, bg_bool])
+    bg_count = primer_to_bg_count[primer]
+    bg_bool = (bg_count is None or bg_count / bg_total_length < src.parameter.max_bg_freq)
+    results.append([primer, fg_count, bg_count, fg_bool, bg_bool])
 
     df = pd.DataFrame(results, columns=['primer', 'fg_count', 'bg_count', 'fg_bool', 'bg_bool'])
-    # if output_df_fname:
-    #     pickle.dump(df, open(output_df_fname, 'wb'))
+
     return df
 
+
 def get_rates_for_one_species(primer_list, fname_prefixes):
+    """
+    Computes the binding site frequencies for all ppsth prefixes in fname_prefixes.
+
+    Args:
+        primer_list: The list of primers to compute frequencies for.
+        fg_prefixes: The list of foreground path prefixes used for creating the kmer files.
+
+    Returns:
+        all_primer_to_count: A dictonary of primer to frequency.
+    """
     stratified_primer_list = {}
 
     for primer in primer_list:
@@ -148,7 +179,7 @@ def get_rates_for_one_species(primer_list, fname_prefixes):
             # get_rate_for_one_file((primer_list_k, fname_prefix, k))
 
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-    results = pool.map(get_rate_for_one_file, tasks)
+    results = pool.map(_get_rate_for_one_file, tasks)
 
     all_primer_to_count = {}
 
@@ -160,7 +191,8 @@ def get_rates_for_one_species(primer_list, fname_prefixes):
                 all_primer_to_count[primer] += count
     return all_primer_to_count
 
-def get_rate_for_one_file(task):
+
+def _get_rate_for_one_file(task):
     primer_list, fname_prefix, k = task
     primer_to_count = {}
     with open(fname_prefix + '_' + str(k) + 'mer_all.txt', 'r') as f_in:
@@ -177,9 +209,20 @@ def get_rate_for_one_file(task):
             all_counts.append(0)
     return dict(zip(primer_list, all_counts))
 
-def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df=None, input_df_fname=src.parameter.data_dir + 'primer_candidate_list_myco_human.p'):
-    if df is None:
-        df = pickle.load(open(input_df_fname, 'rb'))
+
+def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df):
+    """Computes the Gini index of the gap distances between binding sites.
+
+    Args:
+        fg_prefixes: List of path prefixes to the kmer files of the foreground genome.
+        fg_genomes: List of paths to the foreground fasta files.
+        fg_seq_lengths: List of sequence length(s) of the foreground genome(s).
+        df: Pandas dataframe with column primer containing the primer sequences.
+
+    Returns:
+        df: Input dataframe with new column 'gini' for the computed Gini indices.
+
+    """
     df['gini'] = src.primer_attributes.get_gini_from_txt(df['primer'].values, fg_prefixes, fg_genomes, fg_seq_lengths)
 
     if len(df['gini']) == 0:

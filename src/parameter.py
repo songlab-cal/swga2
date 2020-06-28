@@ -1,14 +1,22 @@
 import os
-import multiprocessing
 import json
 import src.utility
 
 src_dir=os.path.dirname(os.path.abspath(__file__))
 
 def get_all_files(prefix_or_file):
+    """
+    If passed a directory path, this returns all the fasta files in a directory. Otherwise, if given a file it
+    passes back the file if it is a fasta file.
+
+    Args:
+        prefix_or_file: Directory path or path to a fasta file.
+
+    Returns:
+        total_files: List of fasta file(s).
+    """
     if type(prefix_or_file) is str:
         if 'fasta' == prefix_or_file.split('.')[-1] or 'fa' == prefix_or_file.split('.')[-1]:
-            print(prefix_or_file.split('.')[-1])
             return [prefix_or_file]
         else:
             prefix_or_file = [prefix_or_file]
@@ -19,10 +27,22 @@ def get_all_files(prefix_or_file):
             if each_file.startswith(individual_prefix.split('/')[-1]):
                 if each_file.endswith('fasta') or each_file.endswith('fa'):
                     total_files.append(os.path.join(os.path.dirname(individual_prefix), each_file))
-    # print(total_files)
     return total_files
 
 def get_value_or_default(arg_value, data, key):
+    """
+    Helper function for getting the input values. If a command line argument value was given, just return arg_value.
+    Else we grab the value from the dictionary parsed from the json. This is to ensure command line inputs overwrite
+    json inputs.
+
+    Args:
+        arg_value: Argument value to be returned
+        data: dictionary of parameter to parameter values read from the input json file.
+        key: The name of the parameter.
+
+    Returns:
+        val: Returns the command line input value or the json input value if command line one wasn't entered.
+    """
     if arg_value is not None:
         return arg_value
     if key in data:
@@ -30,7 +50,16 @@ def get_value_or_default(arg_value, data, key):
     else:
         print("Please input values for " + str(key) + ".")
 
-def write_args_to_json(args, out_fname=None):
+def write_args_to_json(args):
+    """
+    Writes the arguments of a pipeline instance to a json file for future use.
+
+    Args:
+        args: All the command line parameter inputs.
+
+    Returns:
+        data: Returns all the parameter inputs in dictionary form.
+    """
     global min_fg_freq
     global max_bg_freq
     global min_tm
@@ -130,9 +159,19 @@ def write_args_to_json(args, out_fname=None):
     return data
 
 def read_args_from_json(in_fname):
+    """
+    Returns the parameters inputs in json form as a dictionary.
+
+    Args:
+        in_fname: Path to the json file.
+
+    Returns:
+        data: Parameter inputs in dictionary form.
+
+    """
     with open(in_fname, 'r') as json_file:
         data = json.load(json_file)
     return data
 
 if __name__ == "__main__":
-    print(cpus)
+    print(get_all_files("/Users/janeyu/Desktop/primer_data_dir/genomes/"))

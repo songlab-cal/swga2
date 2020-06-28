@@ -6,6 +6,13 @@ import os
 
 # #everything should be 5' to 3' written
 def get_all_positions_per_k(kmer_list, seq_fname=None, fname_prefix=None):
+    """
+
+
+    Args:
+
+    Returns:
+    """
     if len(kmer_list) == 0:
         return {}
     k = len(kmer_list[0])

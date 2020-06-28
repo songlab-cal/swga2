@@ -9,7 +9,7 @@
     "max_gini": 0.6,
     "max_primer": 500,
     "min_amp_pred": 5,
-    "cpus": 8,
+    "cpus": 4,
     "max_dimer_bp": 3,
     "max_self_dimer_bp": 4,
     "fg_genomes": [

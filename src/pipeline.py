@@ -13,8 +13,6 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-    import h5py
-
 parser = OptionParser()
 parser.add_option('-k', '--kmer_fore', help='')
 parser.add_option('-l', '--kmer_back', help='')
@@ -94,7 +92,6 @@ def main():
     else:
         print("Please input a command: step1, step2, step3, or step4.")
 
-
 def step1():
     """
         Creates files of all k-mers of length 6 to 12 which is located in the path specificed by --kmer_fore and --kmer_b .
@@ -116,14 +113,15 @@ def step1():
     return fg_seq_lengths, bg_seq_lengths
 
 def step2(all_primers=None):
-    """Filters all candidate primers according to primer design principles (http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html)
+    """
+    Filters all candidate primers according to primer design principles (http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html)
     and minimum foreground frequency, maximum background frequency, and maximum Gini index of distances between binding sites.
 
     Args:
-        all_primers: The list of candidate primers to consider.
+        all_primers: The list of candidate primers to consider. Defaults to all k-mers from 6 to 12 of the target genome if not input.
 
     Returns:
-        filtered_gini_df: .
+        filtered_gini_df: Pandas dataframe containing sequences which pass the foreground frequency, background frequency, and Gini index filters.
     """
     kwargs = {'fg_prefixes': fg_prefixes, 'bg_prefixes': bg_prefixes, 'fg_total_length': sum(fg_seq_lengths),
               'bg_total_length': sum(bg_seq_lengths)}
@@ -152,7 +150,13 @@ def step2(all_primers=None):
     return filtered_gini_df
 
 #RANK BY RANDOM FOREST
-def step3(out_file_prefix=None):
+def step3():
+    """
+        Filters primers according to primer efficacy. To adjust the threshold, use option -a or --min_amp_pred.
+
+        Returns:
+            joined_step3_df: Pandas dataframe of sequences passing step 3.
+    """
     step2_df = pickle.load(open(os.path.join(src.parameter.data_dir, 'step2_df.p'), 'rb'))
 
     primer_list = step2_df['primer']
@@ -175,11 +179,7 @@ def step3(out_file_prefix=None):
 
     joined_step3_df = step3_df.join(step2_df[['ratio', 'gini', 'fg_count', 'bg_count']], how='left').sort_values(by='gini')
 
-    if out_file_prefix:
-        pickle.dump(joined_step3_df, open(out_file_prefix + "df_pred.p", "wb"))
-        joined_step3_df.to_csv(out_file_prefix+'_regression_results.csv')
-    else:
-        pickle.dump(joined_step3_df, open(os.path.join(src.parameter.data_dir, 'step3_df.p'), "wb"))
+    pickle.dump(joined_step3_df, open(os.path.join(src.parameter.data_dir, 'step3_df.p'), "wb"))
 
     print("Filtered " + str(step2_df.shape[0] - joined_step3_df.shape[0]) + " number of primers based on efficacy.")
 
@@ -189,7 +189,14 @@ def step3(out_file_prefix=None):
     return joined_step3_df
 
 # src.optimize AND SEARCH
-def step4(primer_list=None, scores = None, target_var='coverage', selection_metric='deterministic', initial_primer_sets=None, iterations=10, max_sets=10, in_file_prefix=None, out_file=None, fg_circular=True, bg_circular=False, banned_primers=[]):
+def step4(primer_list=None, scores = None, initial_primer_sets=None):
+    """Searches for primer sets using candidate primers from step 3.
+
+    Args:
+        primer_list: The list of primers from which to build sets. Otherwise, the lists defaults to all primers from step  3.
+        scores: The scores or probabilities to use for initial randomization. Defaults the primer efficacy scores from step 3.
+        initial_primer_sets: The list of initialized primer sets. Defaults to random selection according to normalized scores.
+    """
     if primer_list is None:
         step3_df = pickle.load(open(os.path.join(src.parameter.data_dir, 'step3_df.p'), 'rb'))
         primer_list = step3_df.index
@@ -208,7 +215,7 @@ def step4(primer_list=None, scores = None, target_var='coverage', selection_metr
         if initial_primer_sets is not None:
             primer_list.extend(src.utility.flatten(initial_primer_sets))
         else:
-            initial_primer_sets = src.optimize.random_initial_start(np.asarray(primer_list).reshape((-1, 1)), scores, max_sets=max_sets)
+            initial_primer_sets = src.optimize.random_initial_start(np.asarray(primer_list).reshape((-1, 1)), scores, max_sets=src.parameter.max_sets)
 
         print("Initial primers: ")
         print(initial_primer_sets)
@@ -218,15 +225,12 @@ def step4(primer_list=None, scores = None, target_var='coverage', selection_metr
         combined_primer_list = list(set(primer_list+random_primers))
 
         print("Banned primers: " + str(banned_primers))
-        results, scores, cache = src.optimize.bfs(combined_primer_list, fg_prefixes, bg_prefixes, fg_seq_lengths, bg_seq_lengths, initial_primer_sets=initial_primer_sets, iterations=src.parameter.iterations, max_sets=src.parameter.max_sets, target_var=target_var, selection_method=src.parameter.selection_metric, banned_primers=banned_primers, fg_circular=src.parameter.fg_circular, bg_circular=src.parameter.bg_circular, cache=cache, drop_indices=src.parameter.drop_iterations)
+        results, scores, cache = src.optimize.bfs(combined_primer_list, fg_prefixes, bg_prefixes, fg_seq_lengths, bg_seq_lengths, initial_primer_sets=initial_primer_sets, iterations=src.parameter.iterations, max_sets=src.parameter.max_sets, selection_method=src.parameter.selection_metric, banned_primers=banned_primers, fg_circular=src.parameter.fg_circular, bg_circular=src.parameter.bg_circular, cache=cache, drop_indices=src.parameter.drop_iterations)
 
         all_results.append(results)
         all_scores.append(scores)
 
         banned_primers=[src.utility.most_frequent(src.utility.flatten(results)), src.utility.most_frequent(src.utility.flatten(results))]
-
-    if out_file:
-        pickle.dump(results, open(out_file, 'wb'))
 
     all_results = src.utility.flatten(all_results)
     all_scores = src.utility.flatten(all_scores)
@@ -293,7 +297,7 @@ if __name__ == "__main__":
     # step1()
     # step2()
     # step3()
-    step4()
+    # step4()
     # print(parameter.min_fg_freq)
 
     # src.optimize.stand_alone_score_primer_sets([['AAAGTATGG', 'ATTACAGCA', 'GATAAGAGA', 'GTGATGAAA', 'TCAACTATA']], fg_prefixes, bg_prefixes, fg_seq_lengths, bg_seq_lengths)
