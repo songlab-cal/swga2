@@ -8,9 +8,30 @@ import multiprocessing
 import numpy as np
 
 def get_melting_tm(primer):
+    """
+    Gets the predicted melting temperature of a primer using the melt package (https://pypi.org/project/melt/).
+
+    Args:
+        primer: The sequence of the primer.
+
+    Returns:
+        The predicted melting temperature.
+    """
     return melting.temp(primer)
 
 def get_gini(primer, fname_prefixes):
+    """
+    Get the gini index of the gaps between all adjacent positions a primer may bind. This computed from positional gaps
+    both the forward and reverse strand.
+
+    Args:
+        primer: The sequence of the primer.
+        fname_prefixes: The list of path prefixes to the h5py files.
+
+    Returns:
+        gini: The computed gini index of the positional gaps.
+
+    """
     k = len(primer)
     positions_diffs = []
     for i, fname_prefix in enumerate(fname_prefixes):
@@ -27,8 +48,22 @@ def get_gini(primer, fname_prefixes):
     gini = src.utility.gini(positions_diffs)
     return gini
 
-def get_gini_from_txt_for_one_k(task):
-    primer_list, fname_prefix, fname_genome, seq_length, k = task
+# This probably belongs in a different file--its not a primer attribute.
+def get_gini_from_txt_for_one_k(primer_list, fname_prefix, fname_genome, seq_length):
+    """
+    Measures the gini index of the gaps between all adjacent positions any primer in primer_list may bind to.
+
+    Args:
+        primer_list: The list of primers to consider.
+        fname_prefix: The path prefix to the h5py file.
+        fname_genome: The path to the fasta file.
+        seq_length: The length of the genome contained in fname_genome.
+
+    Returns:
+        primer_to_ginis: A dictionary of primers to a tuple of the gini indices (the first being computed from the
+        forward strand, and the second being computed from the reverse strand).
+    """
+    # primer_list, fname_prefix, fname_genome, seq_length, k = task
     rc_primer_list = [src.utility.reverse_complement(primer) for primer in primer_list]
     all_primer_list = list(set(primer_list + rc_primer_list))
     kmer_dict = src.string_search.get_all_positions_per_k(kmer_list=all_primer_list, seq_fname=fname_genome,fname_prefix=fname_prefix)
@@ -41,28 +76,52 @@ def get_gini_from_txt_for_one_k(task):
         gini_reverse = src.utility.gini_exact(position_diffs_reverse)
         ginis.append((gini_forward, gini_reverse))
 
-    return dict(zip(primer_list, ginis))
+    primer_to_ginis = dict(zip(primer_list, ginis))
+    return primer_to_ginis
 
 def get_gini_from_txt(primer_list, fname_prefixes, fname_genomes, seq_lengths):
+    """
+    This runs get_gini_from_txt_for_one_k in a multiprocessed fashion where the task is divided based on the length
+    of the primers.
+
+    Args:
+        primer_list: The list of primers to consider.
+        fname_prefixes: The list of path prefixes to the h5py file.
+        fname_genomes: The list of paths to the fasta files.
+        seq_lengths: The length of all the genomes in fname_genomes (in the same order!).
+
+    Returns:
+        The average gini_index across all gini indices computed for each primer.
+    """
     tasks = []
     for i, fg_prefix in enumerate(fname_prefixes):
         for k in [6, 7, 8, 9, 10, 11, 12]:
-            tasks.append(([primer for primer in primer_list if len(primer) == k], fg_prefix, fname_genomes[i], seq_lengths[i], k))
+            tasks.append(([primer for primer in primer_list if len(primer) == k], fg_prefix, fname_genomes[i], seq_lengths[i]))
 
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-    results = pool.map(get_gini_from_txt_for_one_k, tasks)
+    results = pool.map(get_gini_from_txt_for_one_k, *tasks)
 
     primer_to_all_ginis = {}
-
 
     for primer_to_ginis in results:
         for primer, (gini_forward, gini_reverse) in primer_to_ginis.items():
             if primer not in primer_to_all_ginis:
                 primer_to_all_ginis[primer] = []
             primer_to_all_ginis[primer].append(np.mean([gini_forward, gini_reverse]))
-    return [np.mean(primer_to_all_ginis[primer]) for primer in primer_list]
+    gini_mean = [np.mean(primer_to_all_ginis[primer]) for primer in primer_list]
+    return gini_mean
 
 def get_rate_from_h5py(primer, fname_prefixes):
+    """
+    Gets the frequency of a primer in both the forward and reverse strand.
+
+    Args:
+        primer: The sequence of the primer.
+        fname_prefixes: The list of path prefixes to all the relevant h5py files.
+
+    Returns:
+        count: The frequency of a primer in both the forward and reverse strand.
+    """
     k = len(primer)
     count = 0
     for i, fname_prefix in enumerate(fname_prefixes):
