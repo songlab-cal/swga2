@@ -5,13 +5,19 @@ import h5py
 import os
 
 # #everything should be 5' to 3' written
-def get_all_positions_per_k(kmer_list, seq_fname=None, fname_prefix=None):
+def get_all_positions_per_k(kmer_list, seq_fname, fname_prefix=None):
     """
-
+    Gets all the positions of k-mers for one value of k. It assumes the first kmer in the list is the
+    same length as all kmers in the list. Everything is written in the 5' to 3' direction.
 
     Args:
+        kmer_list: The list of all kmers where k is a specific and single value.
+        seq_fname: The path to the fasta file of the genome.
+        fname_prefix: This argument is only necessary for knowing which fasta file is currently being processed.
 
     Returns:
+        kmer_dict: Dictionary of kmer to count in the fasta file seq_fname.
+
     """
     if len(kmer_list) == 0:
         return {}
@@ -35,8 +41,17 @@ def get_all_positions_per_k(kmer_list, seq_fname=None, fname_prefix=None):
     return kmer_dict
 
 def write_to_h5py(kmer_dict, fname_prefix):
+    """
+    Writes the kmer counts to an h5py file, which allows for efficient access in terms of looking up the
+    frequency of a particular k-mer. If the kmer already exists in the dataset, the entry in the h5py file
+    is overwritten with the new data.
+
+    Args:
+        kmer_dict: A dictionary of all the k-mers and their respective frequencies.
+        fname_prefix: The file path prefix for the output h5py file. If k=6, for example, '_6mer_positions.h5'
+        will be appended to the file name.
+    """
     k = len(list(kmer_dict.keys())[0])
-    # print('APPEND ' + fname_prefix + '_' + str(k) + 'mer_positions.h5')
     f = h5py.File(fname_prefix + '_' + str(k) + 'mer_positions.h5', 'r+')
     for kmer, positions in kmer_dict.items():
 
@@ -48,6 +63,16 @@ def write_to_h5py(kmer_dict, fname_prefix):
     f.close()
 
 def check_which_primers_absent_in_h5py(primer_list, fname_prefix):
+    """
+    This function checks if the primers in a given list are missing from an h5py file.
+
+    Args:
+        primer_list: The list of primers that need to be checked exist in the h5py file.
+        fname_prefix: The prefix of the h5py file--basically the path minus '_6mer_positions.h5' where k = 6.
+
+    Returns:
+        filtered_primer_list: All the primers from the given list of primers that are missing from the h5py file.
+    """
     if len(primer_list) == 0:
         return primer_list
 
@@ -80,15 +105,38 @@ def check_which_primers_absent_in_h5py(primer_list, fname_prefix):
     return filtered_primer_list
 
 def get_positions(primer_list, fname_prefixes, fname_genomes, overwrite=False, no_all_primer_files=False):
+    """
+    Launches a multiprocessing pool to check if all primers exists in their relevant h5py file and modifies the file
+    if frequencies for that k-mer is missing.
+
+    Args:
+        primer_list: List of k-mers to be checked that exist in the h5py files or to modify them if not.
+        fname_prefixes: The path prefixes for the h5py files, basically the path minus '_6mer_positions.h5' where k = 6.
+        fname_genomes: A list of paths to the fasta files.
+        overwrite: Boolean which when set to true means overwrite the k-mer entries in the h5py file if it already exists.
+    """
     tasks = []
     for i, fg_prefix in enumerate(fname_prefixes):
         for k in [6,7,8,9,10,11,12]:
-            tasks.append(([primer for primer in primer_list if len(primer) == k], fg_prefix, fname_genomes[i], k, overwrite, no_all_primer_files))
+            tasks.append(([primer for primer in primer_list if len(primer) == k], fg_prefix, fname_genomes[i], k, overwrite))
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
     pool.map(append_positions_to_h5py_file, tasks)
 
 def append_positions_to_h5py_file(task):
-    primer_list, fname_prefix, fname_genome, k, overwrite, no_all_primer_files = task
+    """
+    Check if the primer exists in the h5py file and modify all
+    the file if frequencies for that k-mer is missing.
+
+    Args:
+        task: A tuple consisting of the following arguments:
+            primer_list: List of k-mers to be checked that exist in the h5py files or to modify them if not.
+            fname_prefix: The path prefix for the h5py files, basically the path minus '_6mer_positions.h5' where k = 6.
+            fname_genome: A list of paths to the fasta files.
+            k: The length of the k-mers.
+            overwrite: Boolean which when set to true means overwrite the k-mer entries in the h5py file if it already exists.
+
+    """
+    primer_list, fname_prefix, fname_genome, k, overwrite = task
 
     if len(primer_list) == 0:
         return
