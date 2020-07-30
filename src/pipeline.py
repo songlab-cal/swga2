@@ -130,8 +130,9 @@ def step2(all_primers=None):
 
     print("Computing foreground and background rates...")
     rate_df = src.filter.get_all_rates(all_primers, **kwargs)
+    # print(rate_df)
     filtered_rate_df = rate_df[(rate_df['fg_bool']) & (rate_df['bg_bool'])]
-    print(filtered_rate_df)
+    # print(filtered_rate_df)
     filtered_rate_df = filtered_rate_df.drop(['fg_bool', 'bg_bool'], axis=1)
     print("Filtered " + str(len(rate_df) - len(filtered_rate_df)) + " number of primers based on foreground/background rate.")
 
@@ -147,6 +148,8 @@ def step2(all_primers=None):
     pickle.dump(filtered_gini_df, open(os.path.join(src.parameter.data_dir, 'step2_df.p'), 'wb'))
     src.string_search.get_positions(filtered_gini_df['primer'], fg_prefixes, fg_genomes)
     src.string_search.get_positions(filtered_gini_df['primer'], bg_prefixes, bg_genomes)
+    print("Remaining primers: ")
+    print(filtered_gini_df['primer'])
     return filtered_gini_df
 
 #RANK BY RANDOM FOREST
@@ -208,6 +211,7 @@ def step4(primer_list=None, scores = None, initial_primer_sets=None):
     all_results = []
     all_scores = []
     cache = {}
+    banned_primers = []
 
     for i in range(src.parameter.retries):
         print("Repeat #: " + str(i+1))
@@ -288,7 +292,7 @@ def step5(primer_sets):
     for i, selected_set in enumerate(selected_sets):
         print(str(selected_set) + ", score=%0.5f" % selected_scores[i])
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # print("pipeline.py")
 
     # global params

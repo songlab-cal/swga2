@@ -437,7 +437,7 @@ def initialize_fname_to_positions_dict(fname_prefixes, seq_lengths):
     return curr_fname_to_positions
 
 #Parallelizes evaluating adding all valid primers to a top set from the previous iteration.
-def parallel_set_search_one_iteration(tasks, top_set, top_fg_fname_to_positions, top_bg_fname_to_positions, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_seq_lengths, max_sets, selection_method='softmax', cache={}):
+def parallel_set_search_one_iteration(tasks, top_set, top_fg_fname_to_positions, top_bg_fname_to_positions, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_seq_lengths, max_sets, normalize_metric='softmax', cache={}):
     """
     This is a helper function for multiprocessing computation and evaluation of all primer sets built from one of the 
     best primer sets from the previous iteration.
@@ -478,7 +478,7 @@ def parallel_set_search_one_iteration(tasks, top_set, top_fg_fname_to_positions,
     seq_initialized_f = partial(evaluate_pairs_helper, curr_fg_fname_to_positions=top_fg_fname_to_positions, curr_bg_fname_to_positions = top_bg_fname_to_positions, fg_fname_prefixes=fg_fname_prefixes, bg_fname_prefixes=bg_fname_prefixes, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths)
     results = src.utility.create_pool(seq_initialized_f, tasks, src.parameter.cpus)
 
-    selection=make_selection([[task] + top_set for task in tasks], [score for score, temp_fg, temp_bg in results], min(max_sets, len(tasks)), selection_method)
+    selection=make_selection([[task] + top_set for task in tasks], [score for score, temp_fg, temp_bg in results], min(max_sets, len(tasks)), normalize_metric)
 
     for i, result in enumerate(results):
         primer_set = sorted([tasks[i]] + top_set)

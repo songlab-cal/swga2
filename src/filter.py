@@ -137,15 +137,17 @@ def get_all_rates(primer_list, fg_prefixes, bg_prefixes, fg_total_length, bg_tot
     primer_to_fg_count = get_rates_for_one_species(primer_list, fg_prefixes)
     primer_to_bg_count = get_rates_for_one_species(primer_list, bg_prefixes)
 
+    print(primer_to_fg_count)
+    print(primer_to_bg_count)
+
     results = []
 
     for primer in primer_list:
         fg_count = primer_to_fg_count[primer]
-    fg_bool = (fg_count is None or fg_count / fg_total_length > src.parameter.min_fg_freq)
-
-    bg_count = primer_to_bg_count[primer]
-    bg_bool = (bg_count is None or bg_count / bg_total_length < src.parameter.max_bg_freq)
-    results.append([primer, fg_count, bg_count, fg_bool, bg_bool])
+        fg_bool = (fg_count is None or fg_count / fg_total_length > src.parameter.min_fg_freq)
+        bg_count = primer_to_bg_count[primer]
+        bg_bool = (bg_count is None or bg_count / bg_total_length < src.parameter.max_bg_freq)
+        results.append([primer, fg_count, bg_count, fg_bool, bg_bool])
 
     df = pd.DataFrame(results, columns=['primer', 'fg_count', 'bg_count', 'fg_bool', 'bg_bool'])
 

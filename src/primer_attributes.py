@@ -79,6 +79,10 @@ def get_gini_from_txt_for_one_k(primer_list, fname_prefix, fname_genome, seq_len
     primer_to_ginis = dict(zip(primer_list, ginis))
     return primer_to_ginis
 
+def get_gini_from_txt_for_one_k_helper(args):
+    primer_list, fname_prefix, fname_genome, seq_length = args
+    return get_gini_from_txt_for_one_k(primer_list, fname_prefix, fname_genome, seq_length)
+
 def get_gini_from_txt(primer_list, fname_prefixes, fname_genomes, seq_lengths):
     """
     This runs get_gini_from_txt_for_one_k in a multiprocessed fashion where the task is divided based on the length
@@ -96,10 +100,14 @@ def get_gini_from_txt(primer_list, fname_prefixes, fname_genomes, seq_lengths):
     tasks = []
     for i, fg_prefix in enumerate(fname_prefixes):
         for k in [6, 7, 8, 9, 10, 11, 12]:
-            tasks.append(([primer for primer in primer_list if len(primer) == k], fg_prefix, fname_genomes[i], seq_lengths[i]))
+            primer_list_a = [primer for primer in primer_list if len(primer) == k]
+            if len(primer_list_a) > 0:
+                print([primer_list_a, fg_prefix, fname_genomes[i], seq_lengths[i]])
+                tasks.append([primer_list_a, fg_prefix, fname_genomes[i], seq_lengths[i]])
 
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-    results = pool.map(get_gini_from_txt_for_one_k, *tasks)
+    print(*tasks)
+    results = pool.map(get_gini_from_txt_for_one_k_helper, tasks)
 
     primer_to_all_ginis = {}
 
