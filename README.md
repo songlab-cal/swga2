@@ -27,13 +27,17 @@ Enter the virtual environment using
 $ source soapswga_venv/bin/activate
 ```
 
+To install `soapswga`, first download the repository and go into the downloaded folder:
+
+```bash
+$ cd soapswga
+```
+
 Install dependencies in the virtual environment using
 
 ```bash
 $ pip install -r requirements.txt
 ```
-
-To install `soapswga`, first download the repository and go into the downloaded folder. Run the following: 
 
  ```bash
 $ pip install .
@@ -51,11 +55,12 @@ The primary step in the program identifies the k-mers of length 6 to 12 in the t
 
 The k-mer files for the target and off-target gnomes will be output to a file with a path prefix determined by command line parameters `-k` or `--kmer-fore` and `-j` or `--kmer-back`, respectively. 
 
-For example, if you have a ready json file (see ../examples/plasmid_example/params.json) you can run 
+For example, if you have a ready json file (see ./examples/plasmid_example/params.json) you can run 
 
 ```bash
-$ step1 -j ../examples/plasmid_example/params.json
+$ soapswga step1 -j ./examples/plasmid_example/params.json
 ```
+
 and for each prefix in `fg_prefixes` and `bg_prefixes` of the json file, a file with suffixes `_Xmer_all.txt` for X = 6 to 12 containing all k-mers of length X. The program will use the fasta file in `fg_genomes` or `bg_genomes` at the corresponding index. Thus, `fg_prefixes` should have the same length as `fg_genomes` and the same for `bg_prefixes` and `bg_genomes`. If they do not have the same length, the name of the fasta file will be used as the file prefix but at the path specified by `fg_prefixes` or `bg_prefixes` if it exists.
 
 Alternatively, if there is no pre-existing json file, the k-mer files for the target and off-target gnomes will be output to a file with a path prefix determined by command line parameters `-k` or `--kmer-fore` and `-j` or `--kmer-back`, respectively. 
@@ -65,21 +70,21 @@ The genome files will be read from the `fg_genomes` and `bg_genomes` entries in 
 Example:
 
 ```bash
-$ step1 -j ../examples/plasmid_example/params.json
+$ soapswga step1 -j ./examples/plasmid_example/params.json
 ```
 or if a json file does not exist/you want to overwrite parameters in the json:
 
 ```bash
-$ step1 --kmer_fore ../examples/plasmid_example/kmer_files/myco --kmer_back ../examples/plasmid_example/kmer_files/human
- --fasta_fore ../examples/plasmid_example/genomes/MTBH37RV --fasta_back ../examples/plasmid_example/genomes/chr --json_file  ../examples/plasmid_example/params.json --data_dir ../examples/plasmid_example/
+$ soapswga step1 --kmer_fore ./examples/plasmid_example/kmer_files/myco --kmer_back ./examples/plasmid_example/kmer_files/human
+ --fasta_fore ./examples/plasmid_example/genomes/MTBH37RV --fasta_back ./examples/plasmid_example/genomes/chr --json_file  ./examples/plasmid_example/params.json --data_dir ./examples/plasmid_example/
 ```
-This would produce the given `.txt` files in `examples/plasmid_example/kmer_files/` and it would use all the fasta files with the path prefix `../examples/plasmid_example/genomes/MTBH37RV` and `../examples/plasmid_example/genomes/chr`.
+This would produce the given `.txt` files in `examples/plasmid_example/kmer_files/` and it would use all the fasta files with the path prefix `./examples/plasmid_example/genomes/MTBH37RV` and `./examples/plasmid_example/genomes/chr`.
 
 #### Step 1 relevant parameters
 
 | Short option | Long option | Default value | Description |
 | ------------- | ------------- | ------------- | ------------- |
-| -j | --json_file | None | path of json file, either existing or to be written |
+| -j | --json_file | None | path to json file, either existing or to be written |
 | -k | --kmer_fore | None | path prefix for the kmer files of the target genomes | 
 | -l | --kmer_back | None | path prefix for the kmer files of the off-target genomes |
 | -x | --fasta_fore | None | path or path prefix to the fasta files of the on-target genomes | 
@@ -100,7 +105,7 @@ A h5py files are then created for storing primers and their respective locations
 Example:
 
 ```bash
-$ step2 -j ../examples/plasmid_example/params.json
+$ soapswga step2 -j ./examples/plasmid_example/params.json
 ```
 
 #### Step 2 relevant parameters
@@ -122,7 +127,7 @@ $ step2 -j ../examples/plasmid_example/params.json
 | -z | --data_dir | soapswga/project/ | the project directory where metadata files will be stored |
 
 <!-- ```bash
-$ step2 --min_fg_freq 1e-05 --max_fg_freq 5e-06 --max_gini 0.6 --max_primer 500 --min_amp_pred 5
+$ soapswga step2 --min_fg_freq 1e-05 --max_fg_freq 5e-06 --max_gini 0.6 --max_primer 500 --min_amp_pred 5
 ``` -->
 
 ### Step 3: Amplification efficacy scoring
@@ -132,12 +137,12 @@ In this step, before we optimize over the combinatorial space of primer sets, we
 Example:
 
 ```bash
-$ step3 -j ../examples/plasmid_example/params.json
+$ soapswga step3 -j ./examples/plasmid_example/params.json
 ```
 or if a json file does not exist/you want to overwrite parameters in the json:
 
 <!-- ```bash
-$ step3 --min_amp_pred 5
+$ soapswga step3 --min_amp_pred 5
 ``` -->
 #### Step 3 relevant parameters
 | Short option | Long option | Default value | Description |
@@ -153,11 +158,11 @@ Using the filtered list of primers from the previous step, SOAPswga searches for
 
 
 ```bash
-$ step4 -j ../examples/plasmid_example/params.json
+$ soapswga step4 -j ./examples/plasmid_example/params.json
 ```
 
 <!-- ```bash
-$ step4 --max-sets 5 --drop_iterations [4]
+$ soapswga step4 --max-sets 5 --drop_iterations [4]
 ``` -->
 
 #### Step 4 relevant parameters
