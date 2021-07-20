@@ -962,8 +962,10 @@ def evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_leng
     all_features['agnostic_mean_gap_ratio'] = all_features['on_agnostic_mean_gap'] / all_features['off_agnostic_mean_gap']
 
     X = all_features[['ratio', 'agnostic_mean_gap_ratio', 'on_gap_gini', 'off_gap_gini', 'within_mean_gap_ratio']]
-    clf = pickle.load(open(os.path.join(src.parameter.src_dir, 'ratio_agnostic_mean_gap_ratio_all_ginis_within_mean_gap_ratio.p'),
-        'rb'))
+    fo = open(os.path.join(src.parameter.src_dir, 'ratio_agnostic_mean_gap_ratio_all_ginis_within_mean_gap_ratio.p'),
+        'rb')
+    clf = pickle.load(fo)
+    fo.close()
 
     score = clf.predict(X)[0]
 
