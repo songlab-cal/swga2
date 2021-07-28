@@ -150,7 +150,11 @@ def get_all_seq_lengths(fname_genomes=None, cpus=8):
     Returns:
         l: List of lengths of the individual genomes in all the fasta files.
     """
-    seq_lengths = create_pool(get_seq_length, fname_genomes, cpus)
+    # seq_lengths = create_pool(get_seq_length, fname_genomes, cpus)
+    seq_lengths = []
+
+    for fname_genome in fname_genomes:
+        seq_lengths.append(get_seq_length(fname_genome))
     return seq_lengths
 
 def longest_char_repeat(s, char):
