@@ -222,6 +222,8 @@ def step4(primer_list=None, scores = None, initial_primer_sets=None):
     for i in range(src.parameter.retries):
         print("Repeat #: " + str(i+1))
 
+        primer_list = list(set(primer_list) - set(banned_primers))
+
         if initial_primer_sets is not None:
             primer_list.extend(src.utility.flatten(initial_primer_sets))
         else:

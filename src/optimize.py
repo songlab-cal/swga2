@@ -67,7 +67,6 @@ def search_initialization(fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, 
 
         partial_initialized_f = partial(evaluate_wrapper, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths, fg_circular=fg_circular, bg_circular=bg_circular)
         top_scores = src.utility.create_pool(partial_initialized_f, list(zip(top_fg_fname_to_positions, top_bg_fname_to_positions)), src.parameter.cpus)
-        # top_scores = evaluate_wrapper(list(zip(top_fg_fname_to_positions, top_bg_fname_to_positions)), fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths, fg_circular=fg_circular, bg_circular=bg_circular)
         top_sets = initial_primer_sets
 
     return top_sets, top_scores, top_fg_fname_to_positions, top_bg_fname_to_positions
@@ -318,7 +317,6 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
                                                                                  fg_circular=fg_circular,
                                                                                  bg_circular=bg_circular)
 
-    print(top_scores)
     finished_sets = []  # Keeps track of the best sets out of all iterations.
     finished_scores = []
 
@@ -418,6 +416,7 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
     for finished_set in finished_sets:
         if len(finished_set) > 0:
             print('[' + ', '.join(map(str, finished_set))+']')
+    print(finished_scores)
 
     return finished_sets, finished_scores, cache
 
