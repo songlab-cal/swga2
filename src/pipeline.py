@@ -240,7 +240,9 @@ def step4(primer_list=None, scores = None, initial_primer_sets=None):
         all_results.append(results)
         all_scores.append(scores)
 
-        banned_primers=[src.utility.most_frequent(src.utility.flatten(results)), src.utility.most_frequent(src.utility.flatten(results))]
+        banned_primers.append(src.utility.most_frequent(src.utility.flatten(results)))
+        banned_primers.append(src.utility.most_frequent(src.utility.flatten(results)))
+        banned_primers = list(set(banned_primers))
 
     all_results = src.utility.flatten(all_results)
     all_scores = src.utility.flatten(all_scores)
@@ -298,7 +300,7 @@ def step5(primer_sets):
     for i, selected_set in enumerate(selected_sets):
         print(str(selected_set) + ", score=%0.5f" % selected_scores[i])
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
     # print("pipeline.py")
 
     # global params
