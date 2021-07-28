@@ -149,7 +149,7 @@ def step2(all_primers=None):
     filtered_gini_df = gini_df.sort_values(by=['ratio'], ascending=False)[:src.parameter.max_primer]
 
     # pickle.dump(filtered_gini_df, open(os.path.join(src.parameter.data_dir, 'step2_df.p'), 'wb'))
-    filtered_gini_df.to_csv(os.path.join(src.parameter.data_dir, 'step2_df.p'))
+    filtered_gini_df.to_csv(os.path.join(src.parameter.data_dir, 'step2_df.csv'))
     src.string_search.get_positions(filtered_gini_df['primer'], fg_prefixes, fg_genomes, circular=src.parameter.fg_circular)
     src.string_search.get_positions(filtered_gini_df['primer'], bg_prefixes, bg_genomes, circular=src.parameter.bg_circular)
     print("Number of remaining primers: " + str(len(filtered_gini_df['primer'])))
@@ -164,7 +164,7 @@ def step3():
         Returns:
             joined_step3_df: Pandas dataframe of sequences passing step 3.
     """
-    step2_df = pd.read_csv(os.path.join(src.parameter.data_dir, 'step2_df.p'))
+    step2_df = pd.read_csv(os.path.join(src.parameter.data_dir, 'step2_df.csv'))
     # step2_df = pickle.load(open(os.path.join(src.parameter.data_dir, 'step2_df.p'), 'rb'))
 
     primer_list = step2_df['primer']
@@ -190,7 +190,7 @@ def step3():
     joined_step3_df = step3_df.join(step2_df[['ratio', 'gini', 'fg_count', 'bg_count']], how='left').sort_values(by='gini')
 
     # pickle.dump(joined_step3_df, open(os.path.join(src.parameter.data_dir, 'step3_df.p'), "wb"))
-    joined_step3_df.to_csv(os.path.join(src.parameter.data_dir, 'step3_df.p'))
+    joined_step3_df.to_csv(os.path.join(src.parameter.data_dir, 'step3_df.csv'))
 
     print("Filtered " + str(step2_df.shape[0] - joined_step3_df.shape[0]) + " number of primers based on efficacy.")
 
@@ -210,7 +210,7 @@ def step4(primer_list=None, scores = None, initial_primer_sets=None):
     """
     if primer_list is None:
         # step3_df = pickle.load(open(os.path.join(src.parameter.data_dir, 'step3_df.p'), 'rb'))
-        step3_df = pd.read_csv(os.path.join(src.parameter.data_dir, 'step3_df.p'))
+        step3_df = pd.read_csv(os.path.join(src.parameter.data_dir, 'step3_df.csv'))
         primer_list = step3_df['primer']
         scores = step3_df['on.target.pred']
 
@@ -218,7 +218,6 @@ def step4(primer_list=None, scores = None, initial_primer_sets=None):
     all_scores = []
     cache = {}
     banned_primers = []
-    print(primer_list)
 
     for i in range(src.parameter.retries):
         print("Repeat #: " + str(i+1))
