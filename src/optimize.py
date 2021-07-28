@@ -10,6 +10,7 @@ import h5py
 import scipy.stats
 from sortedcontainers import SortedSet
 import os
+import warnings
 
 # Path to the saved model for evaluating the primer set.
 ridge_regression_model = 'evaluation_models/on_mean_entropy_off_mean_kurtosis.p'
@@ -64,9 +65,9 @@ def search_initialization(fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, 
         top_bg_fname_to_positions = src.utility.create_pool(bg_seq_initialized_f, initial_primer_sets, src.parameter.cpus)
         print("Done with background search initialization.")
 
-        partial_initialized_f = partial(evaluate_wrapper, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths)
+        partial_initialized_f = partial(evaluate_wrapper, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths, fg_circular=fg_circular, bg_circular=bg_circular)
         top_scores = src.utility.create_pool(partial_initialized_f, list(zip(top_fg_fname_to_positions, top_bg_fname_to_positions)), src.parameter.cpus)
-
+        # top_scores = evaluate_wrapper(list(zip(top_fg_fname_to_positions, top_bg_fname_to_positions)), fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths, fg_circular=fg_circular, bg_circular=bg_circular)
         top_sets = initial_primer_sets
 
     return top_sets, top_scores, top_fg_fname_to_positions, top_bg_fname_to_positions
@@ -151,7 +152,7 @@ def drop_out_layer(primer_sets, cache, fg_prefixes=None, bg_prefixes=None, fg_se
         curr_bg_fname_to_positions = src.utility.create_pool(bg_seq_initialized_f, tasks, cpus=src.parameter.cpus)
 
         partial_initialized_f = partial(evaluate_wrapper, fg_seq_lengths=fg_seq_lengths,
-                                        bg_seq_lengths=bg_seq_lengths)
+                                        bg_seq_lengths=bg_seq_lengths, fg_circular=fg_circular, bg_circular=bg_circular)
         curr_scores = src.utility.create_pool(partial_initialized_f, list(zip(curr_fg_fname_to_positions, curr_bg_fname_to_positions)), cpus=src.parameter.cpus)
 
         for i, primer_set_sub in enumerate(tasks):
@@ -237,7 +238,8 @@ def bfs_one_top_set(**kwargs):
     bg_seq_lengths = kwargs['bg_seq_lengths']
     max_sets = kwargs['max_sets']
     normalize_metric = kwargs['normalize_metric']
-
+    fg_circular = kwargs['fg_circular']
+    bg_circular = kwargs['bg_circular']
 
     tasks_sub = []
 
@@ -261,7 +263,7 @@ def bfs_one_top_set(**kwargs):
                                                                                    top_bg_fname_to_positions_sub,
                                                                                    fg_fname_prefixes, bg_fname_prefixes,
                                                                                    fg_seq_lengths, bg_seq_lengths,
-                                                                                   max_sets_sub, normalize_metric=normalize_metric, cache=compressed_string_to_score)
+                                                                                   max_sets_sub, normalize_metric=normalize_metric, cache=compressed_string_to_score, fg_circular=fg_circular, bg_circular=bg_circular)
     else:
         next_top_sets_sub = [[] for x in range(max_sets)]
         next_top_scores_sub = [0 for x in range(max_sets)]
@@ -316,6 +318,7 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
                                                                                  fg_circular=fg_circular,
                                                                                  bg_circular=bg_circular)
 
+    print(top_scores)
     finished_sets = []  # Keeps track of the best sets out of all iterations.
     finished_scores = []
 
@@ -356,7 +359,8 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
                                 bg_seq_lengths=bg_seq_lengths,
                                 max_sets=max_sets,
                                 normalize_metric='deterministic',
-                                compressed_string_to_score=cache)
+                                compressed_string_to_score=cache, 
+                                fg_circular=fg_circular, bg_circular=bg_circular)
 
             next_top_sets_all.extend(next_top_sets_sub)
             next_top_scores_all.extend(next_top_scores_sub)
@@ -368,7 +372,7 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
             finished_sets.extend(top_sets)
             finished_scores.extend(top_scores)
 
-            print("Finished sets:")
+            print("Finished sets for this restart:")
             print(', '.join(map(str, finished_sets)))
             print(finished_scores)
             print()
@@ -393,7 +397,7 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
                 finished_scores.append(top_scores[i])
                 finished_sets.append(top_set)
 
-        if iter in drop_indices:
+        if iter == drop_indices:
             top_sets, top_scores, top_fg_fname_to_positions, top_bg_fname_to_positions, cache = drop_out_layer([next_top_sets_all[i] for i in selection], cache, fg_prefixes=fg_fname_prefixes, bg_prefixes=bg_fname_prefixes, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths, fg_circular=fg_circular, bg_circular=bg_circular, max_sets=max_sets)
             banned_primers = []
 
@@ -410,7 +414,7 @@ def bfs(primer_list, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_se
     # finished_scores = [src.utility.sigmoid(x) for x in finished_scores]
     # print(finished_scores)
 
-    print("Finished sets:")
+    print("Finished sets for this restart:")
     for finished_set in finished_sets:
         if len(finished_set) > 0:
             print('[' + ', '.join(map(str, finished_set))+']')
@@ -437,7 +441,7 @@ def initialize_fname_to_positions_dict(fname_prefixes, seq_lengths):
     return curr_fname_to_positions
 
 #Parallelizes evaluating adding all valid primers to a top set from the previous iteration.
-def parallel_set_search_one_iteration(tasks, top_set, top_fg_fname_to_positions, top_bg_fname_to_positions, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_seq_lengths, max_sets, normalize_metric='softmax', cache={}):
+def parallel_set_search_one_iteration(tasks, top_set, top_fg_fname_to_positions, top_bg_fname_to_positions, fg_fname_prefixes, bg_fname_prefixes, fg_seq_lengths, bg_seq_lengths, max_sets, normalize_metric='softmax', cache={}, fg_circular=True, bg_circular=False):
     """
     This is a helper function for multiprocessing computation and evaluation of all primer sets built from one of the 
     best primer sets from the previous iteration.
@@ -475,7 +479,7 @@ def parallel_set_search_one_iteration(tasks, top_set, top_fg_fname_to_positions,
         This prevents recomputing the score for the same primer set everytime. May or may not have been modified
         during the function call depending on if a primer set was missing from the cache or not.
     """
-    seq_initialized_f = partial(evaluate_pairs_helper, curr_fg_fname_to_positions=top_fg_fname_to_positions, curr_bg_fname_to_positions = top_bg_fname_to_positions, fg_fname_prefixes=fg_fname_prefixes, bg_fname_prefixes=bg_fname_prefixes, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths)
+    seq_initialized_f = partial(evaluate_pairs_helper, curr_fg_fname_to_positions=top_fg_fname_to_positions, curr_bg_fname_to_positions = top_bg_fname_to_positions, fg_fname_prefixes=fg_fname_prefixes, bg_fname_prefixes=bg_fname_prefixes, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths, fg_circular=fg_circular, bg_circular=bg_circular)
     results = src.utility.create_pool(seq_initialized_f, tasks, src.parameter.cpus)
 
     selection=make_selection([[task] + top_set for task in tasks], [score for score, temp_fg, temp_bg in results], min(max_sets, len(tasks)), normalize_metric)
@@ -549,7 +553,7 @@ def make_selection(all_sets, all_scores, max_sets, normalize_metric):
 
     return selection
 
-def get_features_simplified(fname_to_positions, seq_lengths, target=True):
+def get_features_simplified(fname_to_positions, circular, seq_lengths, target=True):
     """
     A function which computes various features for regression.
 
@@ -575,6 +579,7 @@ def get_features_simplified(fname_to_positions, seq_lengths, target=True):
     within_mean_gaps = []
     agnostic_mean_gaps = []
 
+
     for i, positions in enumerate(fname_to_positions):
         positions_forward = positions[0]
         positions_reverse = positions[1]
@@ -582,16 +587,16 @@ def get_features_simplified(fname_to_positions, seq_lengths, target=True):
         matches += len(positions_forward)
         matches += len(positions_reverse)
 
-        data_forward = get_position_features(positions_forward, seq_lengths[i])
-        data_reverse = get_position_features(positions_reverse, seq_lengths[i])
+        data_forward = get_position_features(positions_forward, circular, seq_lengths[i])
+        data_reverse = get_position_features(positions_reverse, circular, seq_lengths[i])
 
         gap_sizes.append((data_forward['mean'] + data_reverse['mean'])/seq_lengths[i]/2)
         gap_ginis.append((data_forward['gini'] + data_reverse['gini'])/2)
 
-        alternating_gaps_data = get_positional_gap_lengths_alternating(positions_forward, positions_reverse)
+        alternating_gaps_data = get_positional_gap_lengths_alternating(positions_forward, positions_reverse, circular)
         within_mean_gaps.append(alternating_gaps_data['within_mean']/seq_lengths[i])
 
-        agnostic_gaps_data = get_positional_gap_lengths_agnostic(positions_forward, positions_reverse, seq_length=seq_lengths[i])
+        agnostic_gaps_data = get_positional_gap_lengths_agnostic(positions_forward, positions_reverse, circular, seq_length=seq_lengths[i])
         agnostic_mean_gaps.append(agnostic_gaps_data['mean']/seq_lengths[i])
 
     if target:
@@ -626,7 +631,7 @@ def get_features_simplified(fname_to_positions, seq_lengths, target=True):
 
     return position_features
 
-def get_features(fname_to_positions, seq_lengths, target=True):
+def get_features(fname_to_positions, circular, seq_lengths, target=True):
     """
     A function which computes various features for regression.
 
@@ -663,16 +668,16 @@ def get_features(fname_to_positions, seq_lengths, target=True):
         matches += len(positions_forward)
         matches += len(positions_reverse)
 
-        data_forward = get_position_features(positions_forward, seq_lengths[i])
-        data_reverse = get_position_features(positions_reverse, seq_lengths[i])
+        data_forward = get_position_features(positions_forward, circular, seq_lengths[i])
+        data_reverse = get_position_features(positions_reverse, circular, seq_lengths[i])
 
         gap_sizes.append((data_forward['mean'] + data_reverse['mean'])/seq_lengths[i]/2)
         gap_ginis.append((data_forward['gini'] + data_reverse['gini'])/2)
 
-        alternating_gaps_data = get_positional_gap_lengths_alternating(positions_forward, positions_reverse, seq_length=seq_lengths[i])
+        alternating_gaps_data = get_positional_gap_lengths_alternating(positions_forward, positions_reverse, circular, seq_length=seq_lengths[i])
         within_mean_gaps.append(alternating_gaps_data['within_mean']/seq_lengths[i])
 
-        agnostic_gaps_data = get_positional_gap_lengths_agnostic(positions_forward, positions_reverse, seq_length=seq_lengths[i], include_gini=True)
+        agnostic_gaps_data = get_positional_gap_lengths_agnostic(positions_forward, positions_reverse, circular, seq_length=seq_lengths[i], include_gini=True)
 
         agnostic_mean_gaps.append(agnostic_gaps_data['mean']/seq_lengths[i])
         agnostic_mean_ginis.append(agnostic_gaps_data['gini'])
@@ -720,7 +725,7 @@ def get_features(fname_to_positions, seq_lengths, target=True):
 
     return position_features
 
-def get_positional_gap_lengths_alternating(positions_forward, positions_reverse, threshold=100000):
+def get_positional_gap_lengths_alternating(positions_forward, positions_reverse, circular, threshold=100000):
     """
     A helper function that gets all the lengths of the gaps between adjacent positions on opposite strands which are
     within a threshold. The idea is that this should be more faithful to the actual process of exponential amplification
@@ -762,7 +767,7 @@ def get_positional_gap_lengths_alternating(positions_forward, positions_reverse,
 
     return data
 
-def get_positional_gap_lengths_agnostic(positions_forward, positions_reverse, seq_length=None, include_gini=False):
+def get_positional_gap_lengths_agnostic(positions_forward, positions_reverse, circular, seq_length=None, include_gini=False):
     """
     A helper function that gets all the lengths of the gaps between adjacent positions, without regard for which strand it occurs on.
 
@@ -779,7 +784,7 @@ def get_positional_gap_lengths_agnostic(positions_forward, positions_reverse, se
     positions = SortedSet(positions_forward)
     positions.update(positions_reverse)
 
-    position_differences = get_positional_gap_lengths(positions, seq_length = seq_length)
+    position_differences = get_positional_gap_lengths(positions,circular, seq_length = seq_length)
 
     data = {}
 
@@ -793,7 +798,7 @@ def get_positional_gap_lengths_agnostic(positions_forward, positions_reverse, se
     return data
 
 
-def get_positional_gap_lengths(positions, seq_length=None):
+def get_positional_gap_lengths(positions, circular, seq_length=None):
     """
     Gets all the lengths of the gaps between adjacent positions.
 
@@ -809,15 +814,18 @@ def get_positional_gap_lengths(positions, seq_length=None):
     if differences == []:
         return positions
 
+    if circular:
+        differences.append(seq_length - positions[-1] + positions[0])
+    else:
+        differences.append(seq_length-positions[-1])
+        differences.append(positions[0])
+
     if seq_length is None:
         print("Where is the seq length in get_positional_gap_lengths?")
 
-    differences.append(seq_length-positions[-1])
-    differences.append(positions[0])
-
     return differences
 
-def get_position_features(positions, seq_length):
+def get_position_features(positions, circular, seq_length):
     """
     Gets the features derived from the positions of the exact binding locations. Namely, The mean gap length and the
     gini index of the positional gap lengths.
@@ -829,7 +837,8 @@ def get_position_features(positions, seq_length):
     Returns:
         data: Dictionary where key 'mean' is the mean gap length and 'gini' is the gini index of the gap lengths.
     """
-    position_differences = get_positional_gap_lengths(positions, seq_length=seq_length)
+    position_differences = get_positional_gap_lengths(positions, circular, seq_length=seq_length)
+
     data = {}
 
     if len(position_differences) <= 1:
@@ -915,7 +924,7 @@ def incorporate_positions_row(curr_fname_to_positions, fname_prefixes, primer):
         fname_to_positions.append((curr_positions_forward, curr_positions_reverse))
     return fname_to_positions, total_matches
 
-def evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_lengths=None, bg_seq_lengths=None, return_X=False, fg_circular=True, bg_circular=False):
+def evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_lengths=None, bg_seq_lengths=None, fg_circular=True, bg_circular=False, return_X=False):
     """
     Predicts the amplification score of the entire primer set using a pretrained ridge regression model. Current features are:
         'ratio': The ratio of total exact binding locations in the on-target vs. the off-target. Each total is scaled by their total genome lengths first.
@@ -943,8 +952,10 @@ def evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_leng
         score: The predicted score of he primer set.
         X (optional): The feature matrix to be optionally returned.
     """
-    fg_features = get_features_simplified(temp_fg_fname_to_positions, fg_seq_lengths, target=True)
-    bg_features = get_features_simplified(temp_bg_fname_to_positions, bg_seq_lengths, target=False)
+    warnings.filterwarnings('ignore') 
+
+    fg_features = get_features_simplified(temp_fg_fname_to_positions, fg_circular, fg_seq_lengths, target=True)
+    bg_features = get_features_simplified(temp_bg_fname_to_positions, bg_circular, bg_seq_lengths, target=False)
 
     pd.set_option('display.max_columns', 500)
 
@@ -962,10 +973,12 @@ def evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_leng
     all_features['agnostic_mean_gap_ratio'] = all_features['on_agnostic_mean_gap'] / all_features['off_agnostic_mean_gap']
 
     X = all_features[['ratio', 'agnostic_mean_gap_ratio', 'on_gap_gini', 'off_gap_gini', 'within_mean_gap_ratio']]
+    
     fo = open(os.path.join(src.parameter.src_dir, 'ratio_agnostic_mean_gap_ratio_all_ginis_within_mean_gap_ratio.p'),
         'rb')
     clf = pickle.load(fo)
     fo.close()
+
 
     score = clf.predict(X)[0]
 
@@ -974,7 +987,7 @@ def evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_leng
 
     return score
 
-def evaluate_pairs_helper(new_primer, curr_fg_fname_to_positions=None, curr_bg_fname_to_positions=None, fg_fname_prefixes=None, bg_fname_prefixes=None, fg_seq_lengths=None, bg_seq_lengths=None):
+def evaluate_pairs_helper(new_primer, curr_fg_fname_to_positions=None, curr_bg_fname_to_positions=None, fg_fname_prefixes=None, bg_fname_prefixes=None, fg_seq_lengths=None, bg_seq_lengths=None, fg_circular=True, bg_circular=False):
     """
      Computes the score resulting from adding a new primer to the primer set.
 
@@ -1000,8 +1013,7 @@ def evaluate_pairs_helper(new_primer, curr_fg_fname_to_positions=None, curr_bg_f
      """
     temp_fg_fname_to_positions, _ = incorporate_positions_row(curr_fg_fname_to_positions, fg_fname_prefixes, new_primer)
     temp_bg_fname_to_positions, _ = incorporate_positions_row(curr_bg_fname_to_positions, bg_fname_prefixes, new_primer)
-
-    score = evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths)
+    score = evaluate(temp_fg_fname_to_positions, temp_bg_fname_to_positions, fg_seq_lengths=fg_seq_lengths, bg_seq_lengths=bg_seq_lengths, fg_circular=fg_circular, bg_circular=bg_circular)
     return score, temp_fg_fname_to_positions, temp_bg_fname_to_positions
 
 def build_fname_to_positions(primer_set, fname_prefixes=None, seq_lengths=None, circular=True):
@@ -1024,21 +1036,21 @@ def build_fname_to_positions(primer_set, fname_prefixes=None, seq_lengths=None, 
         temp_fname_to_positions, total_matches = incorporate_positions_row(temp_fname_to_positions, fname_prefixes, primer)
     return temp_fname_to_positions
 
-def evaluate_wrapper(fname_to_positions, fg_seq_lengths=None, bg_seq_lengths=None, target_var='coverage'):
+def evaluate_wrapper(fname_to_positions, fg_seq_lengths=None, bg_seq_lengths=None, fg_circular=True, bg_circular=False):
     """
     Simple helper function that calls evaluate for a particular primer set.
 
     Args:
-        fname_to_positions: List of tuples of sets containing positions of exact binding locations in the forward and reverse strand, respectively, where the index corresponds to the h5py path prefix.
+        fname_to_positions: List of tuples of positions for the foreground and background, respectively.
         fg_seq_lengths: The lengths of the on-target genomes corresponding to the h5py files (in the same order as fname_prefixes).
         bg_seq_lengths: The lengths of the off-target genomes corresponding to the h5py files (in the same order as fname_prefixes).
 
     Returns: returns the output of evaluate.
 
     """
-    return evaluate(fname_to_positions[0], fname_to_positions[1], fg_seq_lengths=fg_seq_lengths,bg_seq_lengths=bg_seq_lengths)
+    return evaluate(fname_to_positions[0], fname_to_positions[1], fg_seq_lengths=fg_seq_lengths,bg_seq_lengths=bg_seq_lengths, fg_circular=fg_circular, bg_circular=bg_circular)
 
-def stand_alone_score_primer_sets(primer_sets, fg_prefixes, bg_prefixes, fg_seq_lengths, bg_seq_lengths, fg_circular=True, bg_circular=False):
+def stand_alone_score_primer_sets(primer_sets, fg_prefixes, bg_prefixes, fg_seq_lengths, bg_seq_lengths, fg_circular, bg_circular):
     """
     This is a function to quickly evaluate a list of candidate primer sets.
 
@@ -1063,10 +1075,12 @@ def stand_alone_score_primer_sets(primer_sets, fg_prefixes, bg_prefixes, fg_seq_
     initial_bg_fname_to_positions = src.utility.create_pool(bg_seq_initialized_f, primer_sets, cpus=src.parameter.cpus)
 
     partial_initialized_f = partial(evaluate_wrapper, fg_seq_lengths=fg_seq_lengths,
-                                    bg_seq_lengths=bg_seq_lengths)
+                                    bg_seq_lengths=bg_seq_lengths, fg_circular=fg_circular, bg_circular=bg_circular)
     top_scores = src.utility.create_pool(partial_initialized_f,
                                      list(zip(initial_fg_fname_to_positions, initial_bg_fname_to_positions)), cpus=src.parameter.cpus)
     print(primer_sets)
     print(top_scores)
     return top_scores
 
+if __name__ == "__main__":
+    get_position_features([3, 8], True, 9)

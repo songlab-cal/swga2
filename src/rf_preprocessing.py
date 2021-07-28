@@ -9,6 +9,7 @@ import melting
 import os
 import src.kmer
 import sklearn
+import warnings
 
 # Names of the features not including the thermodynamicfeatures
 base_features = ['molarity', 'sequence.length', 'number.of.A', 'proportion.of.A', 'number.of.T', 'proportion.of.T', 'number.of.G', 'proportion.of.G', 'number.of.C', 'proportion.of.C', 'GC.content', 'melting_tm', 'GC.clamp', 'longest.A.repeat', 'longest.T.repeat', 'longest.G.repeat', 'longest.C.repeat', 'AA repeat', 'CC repeat', 'TT repeat', 'GG repeat', '3.end.first.base', '3.end.second.base', '3.end.third.base', '3.end.fourth.base', '3.end.fifth.base']
@@ -232,6 +233,8 @@ def predict_new_primers(df):
         output_df: The predicted amplification scores.
 
     """
+    warnings.filterwarnings('ignore') 
+    
     X_test = df[regression_features]
     X_test = X_test.dropna(axis='columns')
 

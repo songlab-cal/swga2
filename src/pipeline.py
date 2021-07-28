@@ -4,14 +4,9 @@ import argparse
 import src.parameter
 import src.utility
 import multiprocessing
-
+import json
 import sys
-import pandas.core.indexes
-sys.modules['pandas.indexes'] = pandas.core.indexes
-
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=FutureWarning)
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
+import pandas as pd
 
 parser = OptionParser()
 parser.add_option('-k', '--kmer_fore', help='')
@@ -37,17 +32,11 @@ parser.add_option('-r', '--retries', default=5, type=int, help='')
 parser.add_option('-w', '--max_sets', default=5, type=int, help='')
 parser.add_option('-f', '--fg_circular', default=True, help='')
 parser.add_option('-b', '--bg_circular', default=False, help='')
-parser.add_option('-d', '--drop_iterations', default=[5], type=int, help='')
+parser.add_option('-d', '--drop_iterations', default=5, type=int, help='')
 parser.add_option('-v', '--verbose', default=False, help='')
 parser.add_option('-c', '--cpus', default=int(multiprocessing.cpu_count()), type=int, help='')
 (options, args) = parser.parse_args()
-params = src.parameter.write_args_to_json(options)
-
-print('======================================================================================================')
-print("Parameters:")
-for param_key, param_val in params.items():
-    print(param_key + ": " + str(param_val))
-print('======================================================================================================')
+params = src.parameter.get_params(options)
 
 import src.kmer
 import src.rf_preprocessing
@@ -58,6 +47,7 @@ import numpy as np
 import src.filter
 import src.string_search
 import os
+import warnings
 
 fg_prefixes = params['fg_prefixes']
 bg_prefixes = params['bg_prefixes']
@@ -67,6 +57,9 @@ bg_genomes = params['bg_genomes']
 
 fg_seq_lengths = params['fg_seq_lengths']
 bg_seq_lengths = params['bg_seq_lengths']
+
+fg_circular = params['fg_circular']
+bg_circular = params['bg_circular']
 
 def main():
 
@@ -80,6 +73,15 @@ def main():
         choices=['step1', 'step2', 'step3', 'step4'])
 
     args, remaining = arg_parser.parse_known_args()
+
+    print('======================================================================================================')
+    print("Parameters:")
+    for param_key, param_val in params.items():
+        print(param_key + ": " + str(param_val))
+    print('======================================================================================================')
+
+    with open(params['json_file'], 'w+') as outfile:
+        json.dump(params, outfile, indent=4)
 
     if args.command == 'step1':
         step1()
@@ -119,6 +121,7 @@ def step2(all_primers=None):
 
     Args:
         all_primers: The list of candidate primers to consider. Defaults to all k-mers from 6 to 12 of the target genome if not input.
+        circular: Boolean variable indicating whether the genome is circular. Set to true by default.
 
     Returns:
         filtered_gini_df: Pandas dataframe containing sequences which pass the foreground frequency, background frequency, and Gini index filters.
@@ -127,7 +130,6 @@ def step2(all_primers=None):
               'bg_total_length': sum(bg_seq_lengths)}
     if all_primers is None:
         all_primers = src.kmer.get_primer_list_from_kmers(fg_prefixes)
-
     print("Computing foreground and background rates...")
     rate_df = src.filter.get_all_rates(all_primers, **kwargs)
     # print(rate_df)
@@ -140,16 +142,18 @@ def step2(all_primers=None):
         print(rate_df)
 
     print("Computing Gini index...")
-    gini_df = src.filter.get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df = filtered_rate_df)
+    # print(src.parameter.fg_circular)
+    gini_df = src.filter.get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, filtered_rate_df, fg_circular)
     print("Filtered " + str(len(filtered_rate_df) - len(gini_df)) + " number of primers based on gini rate.")
     gini_df['ratio'] = gini_df['bg_count']/gini_df['fg_count']
     filtered_gini_df = gini_df.sort_values(by=['ratio'], ascending=False)[:src.parameter.max_primer]
 
-    pickle.dump(filtered_gini_df, open(os.path.join(src.parameter.data_dir, 'step2_df.p'), 'wb'))
-    src.string_search.get_positions(filtered_gini_df['primer'], fg_prefixes, fg_genomes)
-    src.string_search.get_positions(filtered_gini_df['primer'], bg_prefixes, bg_genomes)
-    print("Remaining primers: ")
-    print(filtered_gini_df['primer'])
+    # pickle.dump(filtered_gini_df, open(os.path.join(src.parameter.data_dir, 'step2_df.p'), 'wb'))
+    filtered_gini_df.to_csv(os.path.join(src.parameter.data_dir, 'step2_df.p'))
+    src.string_search.get_positions(filtered_gini_df['primer'], fg_prefixes, fg_genomes, circular=src.parameter.fg_circular)
+    src.string_search.get_positions(filtered_gini_df['primer'], bg_prefixes, bg_genomes, circular=src.parameter.bg_circular)
+    print("Number of remaining primers: " + str(len(filtered_gini_df['primer'])))
+    # print(filtered_gini_df['primer'])
     return filtered_gini_df
 
 #RANK BY RANDOM FOREST
@@ -160,9 +164,11 @@ def step3():
         Returns:
             joined_step3_df: Pandas dataframe of sequences passing step 3.
     """
-    step2_df = pickle.load(open(os.path.join(src.parameter.data_dir, 'step2_df.p'), 'rb'))
+    step2_df = pd.read_csv(os.path.join(src.parameter.data_dir, 'step2_df.p'))
+    # step2_df = pickle.load(open(os.path.join(src.parameter.data_dir, 'step2_df.p'), 'rb'))
 
     primer_list = step2_df['primer']
+    print("Number of primers beginning of step 3: " + str(len(primer_list)))
     fg_scale = sum(fg_seq_lengths)/6200
 
     print("Computing random forest features...")
@@ -174,15 +180,17 @@ def step3():
     results = src.rf_preprocessing.predict_new_primers(df_pred)
     results.sort_values(by=['on.target.pred'], ascending=[False], inplace=True)
 
-    results['on.target.pred'] = results['on.target.pred']
+
     step3_df = results[results['on.target.pred'] >= src.parameter.min_amp_pred]
 
     step2_df = step2_df.set_index('primer')
-    step3_df = step3_df.set_index('sequence')
+    step3_df = step3_df.rename({'sequence':'primer'}, axis='columns')
+    step3_df = step3_df.set_index('primer')
 
     joined_step3_df = step3_df.join(step2_df[['ratio', 'gini', 'fg_count', 'bg_count']], how='left').sort_values(by='gini')
 
-    pickle.dump(joined_step3_df, open(os.path.join(src.parameter.data_dir, 'step3_df.p'), "wb"))
+    # pickle.dump(joined_step3_df, open(os.path.join(src.parameter.data_dir, 'step3_df.p'), "wb"))
+    joined_step3_df.to_csv(os.path.join(src.parameter.data_dir, 'step3_df.p'))
 
     print("Filtered " + str(step2_df.shape[0] - joined_step3_df.shape[0]) + " number of primers based on efficacy.")
 
@@ -201,17 +209,16 @@ def step4(primer_list=None, scores = None, initial_primer_sets=None):
         initial_primer_sets: The list of initialized primer sets. Defaults to random selection according to normalized scores.
     """
     if primer_list is None:
-        step3_df = pickle.load(open(os.path.join(src.parameter.data_dir, 'step3_df.p'), 'rb'))
-        primer_list = step3_df.index
+        # step3_df = pickle.load(open(os.path.join(src.parameter.data_dir, 'step3_df.p'), 'rb'))
+        step3_df = pd.read_csv(os.path.join(src.parameter.data_dir, 'step3_df.p'))
+        primer_list = step3_df['primer']
         scores = step3_df['on.target.pred']
-
-    if type(primer_list) is str:
-        primer_list = pickle.load(open(primer_list, 'rb'))['sequence']
 
     all_results = []
     all_scores = []
     cache = {}
     banned_primers = []
+    print(primer_list)
 
     for i in range(src.parameter.retries):
         print("Repeat #: " + str(i+1))
@@ -263,7 +270,7 @@ def step4(primer_list=None, scores = None, initial_primer_sets=None):
     elif min_score > 100:
         final_scores = [score - abs(min_score) for score in final_scores]
 
-    print("FINAL TOP: " + str(src.parameter.top_set_count))
+    print("FINAL TOP SETS FROM ALL RESTARTS: " + str(src.parameter.top_set_count))
     for i, final_set in enumerate(final_sets[:src.parameter.top_set_count]):
         print('[' + ', '.join(map(str, final_set)) + '], ' + str(round(final_scores[i], 2)))
 
@@ -304,5 +311,5 @@ def step5(primer_sets):
     # step4()
     # print(parameter.min_fg_freq)
 
-    # src.optimize.stand_alone_score_primer_sets([['AAAGTATGG', 'ATTACAGCA', 'GATAAGAGA', 'GTGATGAAA', 'TCAACTATA']], fg_prefixes, bg_prefixes, fg_seq_lengths, bg_seq_lengths)
+    src.optimize.stand_alone_score_primer_sets([['AAAGTATGG', 'ATTACAGCA', 'GATAAGAGA', 'GTGATGAAA', 'TCAACTATA']], fg_prefixes, bg_prefixes, fg_seq_lengths, bg_seq_lengths)
 

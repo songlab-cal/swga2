@@ -137,8 +137,8 @@ def get_all_rates(primer_list, fg_prefixes, bg_prefixes, fg_total_length, bg_tot
     primer_to_fg_count = get_rates_for_one_species(primer_list, fg_prefixes)
     primer_to_bg_count = get_rates_for_one_species(primer_list, bg_prefixes)
 
-    print(primer_to_fg_count)
-    print(primer_to_bg_count)
+    # print(primer_to_fg_count)
+    # print(primer_to_bg_count)
 
     results = []
 
@@ -212,7 +212,7 @@ def _get_rate_for_one_file(task):
     return dict(zip(primer_list, all_counts))
 
 
-def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df):
+def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df, circular):
     """Computes the Gini index of the gap distances between binding sites.
 
     Args:
@@ -225,7 +225,7 @@ def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df):
         df: Input dataframe with new column 'gini' for the computed Gini indices.
 
     """
-    df['gini'] = src.primer_attributes.get_gini_from_txt(df['primer'].values, fg_prefixes, fg_genomes, fg_seq_lengths)
+    df['gini'] = src.primer_attributes.get_gini_from_txt(df['primer'].values, fg_prefixes, fg_genomes, fg_seq_lengths, circular)
 
     if len(df['gini']) == 0:
         df['gini_bool'] = []

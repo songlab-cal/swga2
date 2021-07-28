@@ -50,7 +50,7 @@ def get_value_or_default(arg_value, data, key):
     else:
         print("Please input values for " + str(key) + ".")
 
-def write_args_to_json(args):
+def get_params(args):
     """
     Writes the arguments of a pipeline instance to a json file for future use.
 
@@ -93,8 +93,8 @@ def write_args_to_json(args):
         if not os.path.exists(os.path.dirname(data['json_file'])) or not os.path.isfile(data['json_file']):
             if not os.path.exists(os.path.dirname(data['json_file'])):
                 os.makedirs(os.path.dirname(data['json_file']))
-            if not os.path.isfile(data['json_file']):
-                open(data['json_file'], 'w+').close()
+            # if not os.path.isfile(data['json_file']):
+            #     open(data['json_file'], 'w+').close()
         else:
             data_extra = read_args_from_json(args.json_file)
 
@@ -152,9 +152,6 @@ def write_args_to_json(args):
         data['fg_seq_lengths'] = src.utility.get_all_seq_lengths(fname_genomes=data['fg_genomes'], cpus=data['cpus'])
     if 'bg_seq_lengths' not in data or len(data['bg_seq_lengths']) != len(data['bg_genomes']):
         data['bg_seq_lengths'] = src.utility.get_all_seq_lengths(fname_genomes=data['bg_genomes'], cpus=data['cpus'])
-
-    with open(data['json_file'], 'w+') as outfile:
-        json.dump(data, outfile, indent=4)
 
     return data
 

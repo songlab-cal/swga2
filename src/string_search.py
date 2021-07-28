@@ -5,7 +5,7 @@ import h5py
 import os
 
 # #everything should be 5' to 3' written
-def get_all_positions_per_k(kmer_list, seq_fname, fname_prefix=None):
+def get_all_positions_per_k(kmer_list, seq_fname, circular, fname_prefix=None):
     """
     Gets all the positions of k-mers for one value of k. It assumes the first kmer in the list is the
     same length as all kmers in the list. Everything is written in the 5' to 3' direction.
@@ -28,16 +28,28 @@ def get_all_positions_per_k(kmer_list, seq_fname, fname_prefix=None):
 
     seq = src.utility.read_fasta_file(seq_fname)
     current_text = ''.join([next(seq) for _ in range(k)])
+    beginning_text = current_text[:-1]
 
     if fname_prefix is not None:
         print("Starting the search for " + fname_prefix + ' ' + str(k) + 'mers...')
 
     i = 0
+    if current_text in kmer_dict:
+        kmer_dict[current_text].append(i)
+        i += 1
+
     for c in seq:
+        current_text = current_text[1:] + c.upper()
         if current_text in kmer_dict:
             kmer_dict[current_text].append(i)
-        current_text = current_text[1:] + c.upper()
         i += 1
+
+    if circular:
+        for c in beginning_text:
+            current_text = current_text[1:] + c.upper()
+            if current_text in kmer_dict:
+                kmer_dict[current_text].append(i)
+            i += 1
     return kmer_dict
 
 def write_to_h5py(kmer_dict, fname_prefix):
@@ -104,7 +116,7 @@ def check_which_primers_absent_in_h5py(primer_list, fname_prefix):
                 filtered_primer_list.append(primer)
     return filtered_primer_list
 
-def get_positions(primer_list, fname_prefixes, fname_genomes, overwrite=False, no_all_primer_files=False):
+def get_positions(primer_list, fname_prefixes, fname_genomes, circular, overwrite=False, no_all_primer_files=False):
     """
     Launches a multiprocessing pool to check if all primers exists in their relevant h5py file and modifies the file
     if frequencies for that k-mer is missing.
@@ -118,7 +130,7 @@ def get_positions(primer_list, fname_prefixes, fname_genomes, overwrite=False, n
     tasks = []
     for i, fg_prefix in enumerate(fname_prefixes):
         for k in [6,7,8,9,10,11,12]:
-            tasks.append(([primer for primer in primer_list if len(primer) == k], fg_prefix, fname_genomes[i], k, overwrite))
+            tasks.append(([primer for primer in primer_list if len(primer) == k], fg_prefix, fname_genomes[i], k, circular, overwrite))
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
     pool.map(append_positions_to_h5py_file, tasks)
 
@@ -136,7 +148,7 @@ def append_positions_to_h5py_file(task):
             overwrite: Boolean which when set to true means overwrite the k-mer entries in the h5py file if it already exists.
 
     """
-    primer_list, fname_prefix, fname_genome, k, overwrite = task
+    primer_list, fname_prefix, fname_genome, k, circular, overwrite = task
 
     if len(primer_list) == 0:
         return
@@ -151,14 +163,14 @@ def append_positions_to_h5py_file(task):
         filtered_list = one_k_list
 
     if len(filtered_list) > 0:
-        kmer_dict = get_all_positions_per_k(list(set(filtered_list)), fname_genome, fname_prefix)
+        kmer_dict = get_all_positions_per_k(list(set(filtered_list)), fname_genome, circular, fname_prefix)
         write_to_h5py(kmer_dict, fname_prefix)
 
 if __name__ == "__main__":
     k = 6
-    output_prefix = 'kmer_files/myco'
+    # output_prefix = 'kmer_files/myco'
 
-    test_txt = src.parameter.data_dir + output_prefix + '_' + str(k) + 'mer.txt'
+    # test_txt = src.parameter.data_dir + output_prefix + '_' + str(k) + 'mer.txt'
 
-    kmer_dict = get_all_positions_per_k(["CCGAATCG"], seq_fname=src.parameter.data_dir + 'genomes/chr2.fa')
-    print(len(kmer_dict["CCGAATCG"]))
+    kmer_dict = get_all_positions_per_k(["AACC"], seq_fname='/Users/janeyu/Documents/primer_stuff/soapswga/examples/simple_plasmid_example/pcDNA.fasta', circular=False)
+    print(len(kmer_dict["AACC"]))

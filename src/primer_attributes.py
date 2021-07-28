@@ -49,7 +49,7 @@ def get_gini(primer, fname_prefixes):
     return gini
 
 # This probably belongs in a different file--its not a primer attribute.
-def get_gini_from_txt_for_one_k(primer_list, fname_prefix, fname_genome, seq_length):
+def get_gini_from_txt_for_one_k(primer_list, fname_prefix, fname_genome, seq_length, circular):
     """
     Measures the gini index of the gaps between all adjacent positions any primer in primer_list may bind to.
 
@@ -66,13 +66,13 @@ def get_gini_from_txt_for_one_k(primer_list, fname_prefix, fname_genome, seq_len
     # primer_list, fname_prefix, fname_genome, seq_length, k = task
     rc_primer_list = [src.utility.reverse_complement(primer) for primer in primer_list]
     all_primer_list = list(set(primer_list + rc_primer_list))
-    kmer_dict = src.string_search.get_all_positions_per_k(kmer_list=all_primer_list, seq_fname=fname_genome,fname_prefix=fname_prefix)
+    kmer_dict = src.string_search.get_all_positions_per_k(kmer_list=all_primer_list, seq_fname=fname_genome, circular=circular, fname_prefix=fname_prefix)
     ginis = []
 
     for primer in primer_list:
-        position_diffs_forward = src.optimize.get_positional_gap_lengths(kmer_dict[primer], seq_length=seq_length)
+        position_diffs_forward = src.optimize.get_positional_gap_lengths(kmer_dict[primer], circular, seq_length=seq_length)
         gini_forward = src.utility.gini_exact(position_diffs_forward)
-        position_diffs_reverse = src.optimize.get_positional_gap_lengths(kmer_dict[src.utility.reverse_complement(primer)], seq_length=seq_length)
+        position_diffs_reverse = src.optimize.get_positional_gap_lengths(kmer_dict[src.utility.reverse_complement(primer)], circular, seq_length=seq_length)
         gini_reverse = src.utility.gini_exact(position_diffs_reverse)
         ginis.append((gini_forward, gini_reverse))
 
@@ -80,10 +80,10 @@ def get_gini_from_txt_for_one_k(primer_list, fname_prefix, fname_genome, seq_len
     return primer_to_ginis
 
 def get_gini_from_txt_for_one_k_helper(args):
-    primer_list, fname_prefix, fname_genome, seq_length = args
-    return get_gini_from_txt_for_one_k(primer_list, fname_prefix, fname_genome, seq_length)
+    primer_list, fname_prefix, fname_genome, seq_length, circular = args
+    return get_gini_from_txt_for_one_k(primer_list, fname_prefix, fname_genome, seq_length, circular)
 
-def get_gini_from_txt(primer_list, fname_prefixes, fname_genomes, seq_lengths):
+def get_gini_from_txt(primer_list, fname_prefixes, fname_genomes, seq_lengths, circular):
     """
     This runs get_gini_from_txt_for_one_k in a multiprocessed fashion where the task is divided based on the length
     of the primers.
@@ -102,11 +102,11 @@ def get_gini_from_txt(primer_list, fname_prefixes, fname_genomes, seq_lengths):
         for k in [6, 7, 8, 9, 10, 11, 12]:
             primer_list_a = [primer for primer in primer_list if len(primer) == k]
             if len(primer_list_a) > 0:
-                print([primer_list_a, fg_prefix, fname_genomes[i], seq_lengths[i]])
-                tasks.append([primer_list_a, fg_prefix, fname_genomes[i], seq_lengths[i]])
+                # print([primer_list_a, fg_prefix, fname_genomes[i], seq_lengths[i]])
+                tasks.append([primer_list_a, fg_prefix, fname_genomes[i], seq_lengths[i], circular])
 
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-    print(*tasks)
+
     results = pool.map(get_gini_from_txt_for_one_k_helper, tasks)
 
     primer_to_all_ginis = {}
