@@ -1,4 +1,4 @@
-# SOAPswga (**S**elective **O**timal **A**mplifying **P**rimers for **s**elective **w**hole-**g**enome **a**mplification)
+# SOAPswga (**S**elective **O**ptimal **A**mplifying **P**rimers for **s**elective **w**hole-**g**enome **a**mplification)
 
 ## Contents
 
