@@ -1,4 +1,4 @@
-# SOAPswga (**S**elective **O**ptimal **A**mplifying **P**rimers for **s**elective **w**hole-**g**enome **a**mplification)
+# swga2.0: SOAPswga (**S**elective **O**ptimal **A**mplifying **P**rimers for **s**elective **w**hole-**g**enome **a**mplification)
 
 ## Contents
 
@@ -9,7 +9,7 @@
 
 ## Introduction 
 
-SOAPswga is a command-line tool for choosing   sets of primers for selective whole-genome amplification. The overall pipeline for proposing primer sets takes in a set of genomes which we would like to amplify (target genome(s)) and would not like to amplify (off-target genome(s)), where the goal is to find sets of primers which will effectively and evenly amplify the target genome(s) and not the off-target genome(s). 
+SOAPswga (aka swga2.0) is a command-line tool for choosing   sets of primers for selective whole-genome amplification. The overall pipeline for proposing primer sets takes in a set of genomes which we would like to amplify (target genome(s)) and would not like to amplify (off-target genome(s)), where the goal is to find sets of primers which will effectively and evenly amplify the target genome(s) and not the off-target genome(s). 
 
 ## Installation
 
