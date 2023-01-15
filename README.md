@@ -1,11 +1,24 @@
 # swga2.0: SOAPswga (**S**elective **O**ptimal **A**mplifying **P**rimers for **s**elective **w**hole-**g**enome **a**mplification)
 
+The method is described in the following paper: [https://www.biorxiv.org/content/10.1101/2022.04.27.489632v1.full](https://www.biorxiv.org/content/10.1101/2022.04.27.489632v1.full)
+
+```
+@article{yu2022fast,
+  title={A fast machine-learning-guided primer design pipeline for selective whole genome amplification},
+  author={Yu, Jane A and Oppler, Zachary J and Mitchell, Matthew W and Song, Yun S and Brisson, Dustin},
+  journal={bioRxiv},
+  year={2022},
+  publisher={Cold Spring Harbor Laboratory}
+}
+```
+
+
 ## Contents
 
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Workflow](#workflow)
-* [All parameters](#parameters)
+* [All parameters](#all-parameters)
 
 ## Introduction 
 
@@ -179,7 +192,7 @@ $ soapswga step4 --max-sets 5 --drop_iterations [4]
 | -z | --data_dir | soapswga/project/ | the project directory where metadata files will be stored |
 | -# | --top_sets_count | 10 | the number of top sets to output |
 
-## All parameters
+## All Parameters
 | Short option | Long option | Default value | Description |
 | ------------- | ------------- | ------------- | ------------- |
 | -j | --json_file | None | path of json file, either existing or to be written |
