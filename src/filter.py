@@ -233,4 +233,4 @@ def get_gini(fg_prefixes, fg_genomes, fg_seq_lengths, df, circular):
 
     df['gini_bool'] = df.apply(lambda x: x['gini'] is not None and x['gini'] < src.parameter.max_gini, axis=1)
 
-    return df
+    return df[df['gini_bool']]
