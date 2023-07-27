@@ -1,14 +1,17 @@
 # swga2.0: SOAPswga (**S**elective **O**ptimal **A**mplifying **P**rimers for **s**elective **w**hole-**g**enome **a**mplification)
 
-The method is described in the following paper: [https://www.biorxiv.org/content/10.1101/2022.04.27.489632v1.full](https://www.biorxiv.org/content/10.1101/2022.04.27.489632v1.full)
+The method is described in the following paper: [https://doi.org/10.1371/journal.pcbi.1010137](https://doi.org/10.1371/journal.pcbi.1010137)
 
 ```
-@article{yu2022fast,
+@article{dwivedi2023fast,
   title={A fast machine-learning-guided primer design pipeline for selective whole genome amplification},
-  author={Yu, Jane A and Oppler, Zachary J and Mitchell, Matthew W and Song, Yun S and Brisson, Dustin},
-  journal={bioRxiv},
-  year={2022},
-  publisher={Cold Spring Harbor Laboratory}
+  author={Dwivedi-Yu, Jane A and Oppler, Zachary J and Mitchell, Matthew W and Song, Yun S and Brisson, Dustin},
+  journal={PLOS Computational Biology},
+  volume={19},
+  number={4},
+  pages={e1010137},
+  year={2023},
+  publisher={Public Library of Science San Francisco, CA USA}
 }
 ```
 
